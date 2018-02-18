@@ -23,12 +23,12 @@ option.add_experimental_option("prefs",prefs)
 
 # Create new Instance of Chrome in incognito mode
 
-browser = webdriver.Chrome(executable_path='/Users/taj/Documents/Tims Documents/Jupyter/stayz_calendar/chromedriver', chrome_options=option)
-p_browser = webdriver.Chrome(executable_path='/Users/taj/Documents/Tims Documents/Jupyter/stayz_calendar/chromedriver', chrome_options=option)
+browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
+p_browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
 
 
 # Setup the logging:
-logging.basicConfig(filename='/Users/taj/Stayz/WebData/stayz_log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.log', level=logging.INFO)
+logging.basicConfig(filename='/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.log', level=logging.INFO)
 log = logging.getLogger("ex")
 
 
@@ -89,7 +89,7 @@ pages[start_url] = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 url_pages = browser.find_elements_by_xpath('/html/body/div/main/div/section/div/nav/ul/li/a[@href]')
 
 
-fp = open('/Users/taj/Stayz/WebData/stayz_calendar' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.json', 'w')
+fp = open('/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_calendar' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.json', 'w')
 
 fp.write('[\n')
 
@@ -240,7 +240,7 @@ while( b_nextPage ):
 			#property_data[property_url] = (review_value, cal2[0])
 			pd = {
 				'property_id' : p_id,
-				'ext_ts': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+				'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 				'review_value' : review_value,
 				'review_count' : review_count,
 				'page_nbr' : page_number,
