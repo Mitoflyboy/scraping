@@ -154,101 +154,113 @@ while( b_nextPage ):
 			# Get the property page in the browser
 			try:
 				p_browser.get(property_url)
-			except selenium.common.exceptions.TimeoutException as te:
-				log.info(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Timed out... retry...")
-				p_browser.get(property_url)
+
+
+
+
+
+
+				# Wait for 1 second to ensure all page is rendered
 				time.sleep(1)
 
+				p_id = ''
 
-			# Wait for 1 second to ensure all page is rendered
-			time.sleep(1)
-
-			p_id = ''
-
-			# Property ID - unique for each property
-			p_id1 = p_browser.find_elements_by_xpath('//article/header/ol/li/span/span')
-			p_id1a = [x.text for x in p_id1]
-			for p in p_id1a:
-				#print("Property data: " + p)
-				p_id2 = re.sub('\n','',p)
-				p_id3 = re.sub(' +',' ', p_id2)
-				p_id4 = re.search('\d+',p_id3)
-				p_id = p_id4.group(0)
-
-			#print("Property ID: " + p_id)
-
-			cal = p_browser.find_elements_by_xpath('//div[@id="calendar"]/div/div/table')
-
-			#review_rating = p_browser.find_elements_by_class_name('c-facet__label')
-			
-			#for i in cal.find_elements_by_xpath('.//tr'):
-			#    print(i.get_attribute('innerHTML'))
-
-			try:
-				cal2 = [x.get_attribute('innerHTML') for x in cal]
-
-			except selenium.common.exceptions.StaleElementReferenceException as wde:
-				log.info(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" : Error getting calendar: " + property_url)
-				print(type(wde))
-				print(wde.args)
-				print(wde)
+				# Property ID - unique for each property
+				p_id1 = p_browser.find_elements_by_xpath('//article/header/ol/li/span/span')
 
 
-			try:
-				cal_text = cal2[0]
-			except IndexError as ie:
-				cal_text = 'Unknown'
+				p_id1a = [x.text for x in p_id1]
+				for p in p_id1a:
+					#print("Property data: " + p)
+					p_id2 = re.sub('\n','',p)
+					p_id3 = re.sub(' +',' ', p_id2)
+					p_id4 = re.search('\d+',p_id3)
+					p_id = p_id4.group(0)
 
-			# Number of reviews:
-			rc1 = p_browser.find_elements_by_xpath('/html/body/main/section/div/article/header/p[2]/span/span[2]/small')
-			try:
-				rc_2 = rc1[0].text
+				#print("Property ID: " + p_id)
 
-				rc_3 = re.search('\d+',rc_2)
-				review_count = rc_3.group(0)
+				cal = p_browser.find_elements_by_xpath('//div[@id="calendar"]/div/div/table')
 
+				#review_rating = p_browser.find_elements_by_class_name('c-facet__label')
+				
+				#for i in cal.find_elements_by_xpath('.//tr'):
+				#    print(i.get_attribute('innerHTML'))
 
-			except IndexError as ie:
-				review_count = '-1'
+				try:
+					cal2 = [x.get_attribute('innerHTML') for x in cal]
 
-			#print("Review count: " + review_count)
-
-
-			# Check the current rating out of 5
-			#review_rating = p_browser.find_elements_by_xpath('//span[@class="c-facet c-review__rating"]/span/span[@class="c-facet__label"]')
-			#review_rating = p_browser.find_elements_by_xpath('//*[@id="reviews"]/div[2]/header/span/span/span[2]')
-
-			review_rating = p_browser.find_elements_by_xpath('//*[@id="reviews"]/div[2]/header/span/span/span[2]/span[1]')
-			#print("Review rating raw:")
-			#print(review_rating)
-
-			# Find the review which also has the decimal rating. This is the first review
-			rev = [x.text for x in review_rating]
-
-			review_value = -1
-
-			for r in rev:
-
-				#print("Review: " + r)
-
-				matchObj = re.match( r'\((\d.\d)\).*', r)
-
-				if matchObj:
-					review_value = matchObj.group(1)
-
-			# Write the values to the dictionary:
-			#property_data[property_url] = (review_value, cal2[0])
-			pd = {
-				'property_id' : p_id,
-				'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-				'review_value' : review_value,
-				'review_count' : review_count,
-				'page_nbr' : page_number,
-				'p_nbr' : property_number,
-				'calendar' : cal_text
-			}
+				except selenium.common.exceptions.StaleElementReferenceException as wde:
+					log.info(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" : Error getting calendar: " + property_url)
+					print(type(wde))
+					print(wde.args)
+					print(wde)
 
 
+				try:
+					cal_text = cal2[0]
+				except IndexError as ie:
+					cal_text = 'Unknown'
+
+				# Number of reviews:
+				rc1 = p_browser.find_elements_by_xpath('/html/body/main/section/div/article/header/p[2]/span/span[2]/small')
+				try:
+					rc_2 = rc1[0].text
+
+					rc_3 = re.search('\d+',rc_2)
+					review_count = rc_3.group(0)
+
+
+				except IndexError as ie:
+					review_count = '-1'
+
+				#print("Review count: " + review_count)
+
+
+				# Check the current rating out of 5
+				#review_rating = p_browser.find_elements_by_xpath('//span[@class="c-facet c-review__rating"]/span/span[@class="c-facet__label"]')
+				#review_rating = p_browser.find_elements_by_xpath('//*[@id="reviews"]/div[2]/header/span/span/span[2]')
+
+				review_rating = p_browser.find_elements_by_xpath('//*[@id="reviews"]/div[2]/header/span/span/span[2]/span[1]')
+				#print("Review rating raw:")
+				#print(review_rating)
+
+				# Find the review which also has the decimal rating. This is the first review
+				rev = [x.text for x in review_rating]
+
+				review_value = -1
+
+				for r in rev:
+
+					#print("Review: " + r)
+
+					matchObj = re.match( r'\((\d.\d)\).*', r)
+
+					if matchObj:
+						review_value = matchObj.group(1)
+
+				# Write the values to the dictionary:
+				#property_data[property_url] = (review_value, cal2[0])
+				pd = {
+					'property_id' : p_id,
+					'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+					'review_value' : review_value,
+					'review_count' : review_count,
+					'page_nbr' : page_number,
+					'p_nbr' : property_number,
+					'calendar' : cal_text
+				}
+
+			except selenium.common.exceptions.TimeoutException as te:
+				log.info(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Timed out... skipping " + property_url)
+				pd = {
+					'property_id' : '0000',
+					'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+					'review_value' : '0',
+					'review_count' : '0',
+					'page_nbr' : page_number,
+					'p_nbr' : property_number,
+					'calendar' : property_url
+				}
 
 			#pd[p_id] = ( review_value, review_count, cal_text )
 			if first_page is True:
@@ -272,7 +284,7 @@ while( b_nextPage ):
 			log.error(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : " + wde.args)
 			log.error(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : " + wde)
 
-	log.error(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + "Getting next page: " + nextPageURL)
+	log.info(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + "Getting next page: " + nextPageURL)
 	browser.get(nextPageURL)
 	page_number += 1
 
