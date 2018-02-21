@@ -26,8 +26,8 @@ option.add_experimental_option("prefs",prefs)
 browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
 p_browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
 
-p_browser.implicitly_wait(1.5)
-browser.implicitly_wait(1.5)
+p_browser.implicitly_wait(5)
+browser.implicitly_wait(2.5)
 
 # Setup the logging:
 logging.basicConfig(filename='/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.log', level=logging.INFO)
