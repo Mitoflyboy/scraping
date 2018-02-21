@@ -26,6 +26,8 @@ option.add_experimental_option("prefs",prefs)
 browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
 p_browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
 
+p_browser.implicitly_wait(1.5)
+browser.implicitly_wait(1.5)
 
 # Setup the logging:
 logging.basicConfig(filename='/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.log', level=logging.INFO)
@@ -157,11 +159,8 @@ while( b_nextPage ):
 
 
 
-
-
-
 				# Wait for 1 second to ensure all page is rendered
-				time.sleep(1)
+				#time.sleep(1)
 
 				p_id = ''
 
@@ -197,7 +196,11 @@ while( b_nextPage ):
 
 
 				try:
-					cal_text = cal2[0]
+					# Make sure get all the 6 months of the calendars which are available
+					cal_text = ''
+					for c in cal2:
+						cal_text = cal_text + c
+
 				except IndexError as ie:
 					cal_text = 'Unknown'
 
@@ -285,7 +288,11 @@ while( b_nextPage ):
 			log.error(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : " + wde)
 
 	log.info(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + "Getting next page: " + nextPageURL)
+
+	time.sleep(1)
 	browser.get(nextPageURL)
+	time.sleep(2)
+
 	page_number += 1
 
 
