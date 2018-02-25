@@ -51,7 +51,7 @@ property_number = 1
 
 
 # Read the list of URLs from the previously saved input list
-with open('WebData/stayz_nsw_extract.json') as json_data:
+with open('/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_2018-02-22_17-02.json') as json_data:
 	property_urls = json.load(json_data)
 
 	for p in property_urls:
