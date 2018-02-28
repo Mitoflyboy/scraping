@@ -10,6 +10,11 @@ import time
 import json
 import logging
 
+#--------------------------------------------------------------
+# Constants:
+
+date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+date_time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 
 # Specifying incognito mode as you launch your browser[OPTIONAL]
@@ -19,27 +24,21 @@ option.add_argument("--incognito")
 prefs = {"profile.managed_default_content_settings.images":2}
 option.add_experimental_option("prefs",prefs)
 
-#driver = webdriver.Chrome(chrome_options=option)
 
 # Create new Instance of Chrome in incognito mode
-
 p_browser = webdriver.Chrome(executable_path='/Users/taj/GitHub/scraping/chrome_stayz_calendar/chromedriver', chrome_options=option)
 
 p_browser.implicitly_wait(1)
 
 # Setup the logging:
-logging.basicConfig(filename='/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M") + '.log', level=logging.INFO)
+logging.basicConfig(filename='/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/Logs/stayz_log_' + date_time_str + '.log', level=logging.INFO)
 log = logging.getLogger("ex")
 
 
 
-#ages = {}
-#property_data = {}
-
-#pages[start_url] = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 
-fp = open('/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_calendar' + datetime.datetime.now().strftime("%Y-%m-%d") + '.json', 'a')
+fp = open('/Users/taj/GitHub/scraping/chrome_stayz_calendar/WebData/stayz_calendar_' + date_str + '.json', 'a')
 
 
 
@@ -51,7 +50,7 @@ property_number = 1
 
 
 # Read the list of URLs from the previously saved input list
-with open('/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_2018-02-26_10-23.json') as json_data:
+with open('/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_' + date_str + '.json') as json_data:
 	property_urls = json.load(json_data)
 
 	for p in property_urls:
@@ -136,14 +135,11 @@ with open('/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_2
 						review_value = matchObj.group(1)
 
 				# Write the values to the dictionary:
-				#property_data[property_url] = (review_value, cal2[0])
 				pd = {
 					'property_id' : p_id,
 					'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 					'review_value' : review_value,
 					'review_count' : review_count,
-					#'page_nbr' : page_number,
-					#'p_nbr' : property_number,
 					'calendar' : cal_text
 				}
 
@@ -154,12 +150,9 @@ with open('/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_2
 					'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 					'review_value' : '0',
 					'review_count' : '0',
-					#'page_nbr' : page_number,
-					#'p_nbr' : property_number,
 					'calendar' : property_url
 				}
 
-			#pd[p_id] = ( review_value, review_count, cal_text )
 			if first_page is True:
 				fp.write('[\n')
 				first_page = False
@@ -171,10 +164,6 @@ with open('/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_2
 			property_number += 1
 
 
-			
-
-
-			#myfile.write(property_url + ',' + review_value + ',' + cal2[0] + '\n')
 		except NameError as wde:
 			log.error(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Error loading page: " + property_url)
 			log.error(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : " + type(wde))
@@ -189,4 +178,5 @@ fp.write(']')
 # Mark as completed	
 log.info(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Completed extract...")
 
+fp.close()
 p_browser.close()
