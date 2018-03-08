@@ -92,7 +92,7 @@ class StayzSpider(scrapy.Spider):
         'LOG_LEVEL': logging.WARNING,
         #'ITEM_PIPELINES': {'__main__.JsonWriterPipeline': 1}, #Used for pipeline 1
         'FEED_FORMAT':'json', # Used for pipeline 2
-        'FEED_URI': 'WebData/stayz_nsw_extract_' + datetime.datetime.now().strftime("%Y-%m-%d") + '.json' #Used for pipeline 2
+        'FEED_URI': '/Users/taj/GitHub/scraping/stayz_analysis/WebData/stayz_nsw_extract_' + datetime.datetime.now().strftime("%Y-%m-%d") + '.json' #Used for pipeline 2
     }
     
     url_pages = []
