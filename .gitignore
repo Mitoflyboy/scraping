@@ -6,3 +6,6 @@
 *.prj
 *.shp
 *.shx
+*.gz
+*.csv
+*.dmg
