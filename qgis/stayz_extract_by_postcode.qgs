@@ -1,0 +1,1012 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis version="3.0.0-Girona" projectname="">
+  <title></title>
+  <autotransaction active="0"/>
+  <evaluateDefaultValues active="0"/>
+  <trust active="0"/>
+  <projectCrs>
+    <spatialrefsys>
+      <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+      <srsid>3452</srsid>
+      <srid>4326</srid>
+      <authid>EPSG:4326</authid>
+      <description>WGS 84</description>
+      <projectionacronym>longlat</projectionacronym>
+      <ellipsoidacronym>WGS84</ellipsoidacronym>
+      <geographicflag>true</geographicflag>
+    </spatialrefsys>
+  </projectCrs>
+  <layer-tree-group>
+    <customproperties/>
+    <layer-tree-layer source="file:///C:/Users/tjelliffe/Documents/DataScience/parra_centre.csv?type=csv&amp;xField=Longitude&amp;yField=Latitude&amp;crs=EPSG:4326&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=no" id="parra_centre_6f1535b1_b4d7_48a7_a35a_c3b2a116e4f5" expanded="1" providerKey="delimitedtext" name="parra_centre" checked="Qt::Checked">
+      <customproperties/>
+    </layer-tree-layer>
+    <layer-tree-layer source="file:///C:/Users/tjelliffe/Documents/DataScience/stayz_nsw_extract_2018-03-10.csv?type=csv&amp;xField=lng&amp;yField=lat&amp;crs=EPSG:4326&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=no" id="stayz_nsw_extract_2018_03_10_05c0d407_e2e3_48f8_bf34_d2b0a3a55e36" expanded="1" providerKey="delimitedtext" name="stayz_nsw_extract_2018-03-10" checked="Qt::Checked">
+      <customproperties/>
+    </layer-tree-layer>
+    <layer-tree-layer source="./POA_2011_AUST.shp" id="POA_2011_AUST_ebda2b6a_49b2_493a_b010_6eb8d410ec72" expanded="1" providerKey="ogr" name="POA_2011_AUST" checked="Qt::Checked">
+      <customproperties/>
+    </layer-tree-layer>
+    <custom-order enabled="0">
+      <item>stayz_nsw_extract_2018_03_10_05c0d407_e2e3_48f8_bf34_d2b0a3a55e36</item>
+      <item>POA_2011_AUST_ebda2b6a_49b2_493a_b010_6eb8d410ec72</item>
+      <item>parra_centre_6f1535b1_b4d7_48a7_a35a_c3b2a116e4f5</item>
+    </custom-order>
+  </layer-tree-group>
+  <snapping-settings mode="2" intersection-snapping="0" unit="1" enabled="0" type="1" tolerance="12">
+    <individual-layer-settings>
+      <layer-setting id="parra_centre_6f1535b1_b4d7_48a7_a35a_c3b2a116e4f5" enabled="0" units="1" type="1" tolerance="12"/>
+      <layer-setting id="POA_2011_AUST_ebda2b6a_49b2_493a_b010_6eb8d410ec72" enabled="0" units="1" type="1" tolerance="12"/>
+      <layer-setting id="stayz_nsw_extract_2018_03_10_05c0d407_e2e3_48f8_bf34_d2b0a3a55e36" enabled="0" units="1" type="1" tolerance="12"/>
+    </individual-layer-settings>
+  </snapping-settings>
+  <relations/>
+  <mapcanvas name="theMapCanvas" annotationsVisible="1">
+    <units>degrees</units>
+    <extent>
+      <xmin>149.10315931399875922</xmin>
+      <ymin>-34.62377291623540287</ymin>
+      <xmax>151.9785254358639861</xmax>
+      <ymax>-32.6232336645280796</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+        <srsid>3452</srsid>
+        <srid>4326</srid>
+        <authid>EPSG:4326</authid>
+        <description>WGS 84</description>
+        <projectionacronym>longlat</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>true</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
+  <legend updateDrawingOrder="true">
+    <legendlayer name="parra_centre" drawingOrder="-1" showFeatureCount="0" open="true" checked="Qt::Checked">
+      <filegroup hidden="false" open="true">
+        <legendlayerfile isInOverview="0" visible="1" layerid="parra_centre_6f1535b1_b4d7_48a7_a35a_c3b2a116e4f5"/>
+      </filegroup>
+    </legendlayer>
+    <legendlayer name="stayz_nsw_extract_2018-03-10" drawingOrder="-1" showFeatureCount="0" open="true" checked="Qt::Checked">
+      <filegroup hidden="false" open="true">
+        <legendlayerfile isInOverview="0" visible="1" layerid="stayz_nsw_extract_2018_03_10_05c0d407_e2e3_48f8_bf34_d2b0a3a55e36"/>
+      </filegroup>
+    </legendlayer>
+    <legendlayer name="POA_2011_AUST" drawingOrder="-1" showFeatureCount="0" open="true" checked="Qt::Checked">
+      <filegroup hidden="false" open="true">
+        <legendlayerfile isInOverview="0" visible="1" layerid="POA_2011_AUST_ebda2b6a_49b2_493a_b010_6eb8d410ec72"/>
+      </filegroup>
+    </legendlayer>
+  </legend>
+  <mapViewDocks/>
+  <mapViewDocks3D/>
+  <projectlayers>
+    <maplayer geometry="Polygon" autoRefreshEnabled="0" refreshOnNotifyEnabled="0" simplifyLocal="1" simplifyDrawingHints="1" labelsEnabled="0" minScale="1e+8" simplifyDrawingTol="1" simplifyAlgorithm="0" readOnly="0" autoRefreshTime="0" type="vector" simplifyMaxScale="1" maxScale="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyMessage="">
+      <extent>
+        <xmin>96.81694140800000525</xmin>
+        <ymin>-43.59821500299999997</ymin>
+        <xmax>159.10921900799999662</xmax>
+        <ymax>-9.14217597700000084</ymax>
+      </extent>
+      <id>POA_2011_AUST_ebda2b6a_49b2_493a_b010_6eb8d410ec72</id>
+      <datasource>./POA_2011_AUST.shp</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>POA_2011_AUST</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs</proj4>
+          <srsid>3415</srsid>
+          <srid>4283</srid>
+          <authid>EPSG:4283</authid>
+          <description>GDA94</description>
+          <projectionacronym>longlat</projectionacronym>
+          <ellipsoidacronym>GRS80</ellipsoidacronym>
+          <geographicflag>true</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>true</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial minx="0" maxx="0" minz="0" dimensions="2" crs="" maxz="0" miny="0" maxy="0"/>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links/>
+      </resourceMetadata>
+      <provider encoding="System">ogr</provider>
+      <vectorjoins/>
+      <layerDependencies/>
+      <dataDependencies/>
+      <expressionfields/>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <auxiliaryLayer/>
+      <renderer-v2 enableorderby="0" type="RuleRenderer" symbollevels="0" forceraster="0">
+        <rules key="{77a42fc9-2f4b-4ea8-a8b1-c907b7000363}">
+          <rule symbol="0" filter="(&quot;POA_CODE&quot; IN (2042,2043,2044,2048,2050,2126,2159,2204))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2000 ) AND (&quot;POA_CODE&quot; &lt;= 2019))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2021) AND (&quot;POA_CODE&quot; &lt;= 2037))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2052) AND (&quot;POA_CODE&quot; &lt;= 2114))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2119) AND (&quot;POA_CODE&quot; &lt;= 2122))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;" label="Central &amp; Northern Sydney" key="{033d2e12-0a00-4544-805a-e3e9e2fbddbd}"/>
+          <rule symbol="1" filter="(&quot;POA_CODE&quot; > 2234) AND (&quot;POA_CODE&quot; &lt; 3000)" checkstate="0" label="NSW_Regional" key="{e8545bb4-54e0-4abd-89f7-44146b5fa83c}"/>
+          <rule symbol="2" filter="((&quot;POA_CODE&quot; >= 2600) AND (&quot;POA_CODE&quot; &lt;= 2639))&#xd;&#xa;OR &#xd;&#xa;((&quot;POA_CODE&quot; >= 2900) AND (&quot;POA_CODE&quot; &lt;= 2920))" checkstate="0" label="ACT" key="{80550c4a-4b7d-4ff5-898b-8705a68daf7f}"/>
+          <rule symbol="3" filter="(&quot;POA_CODE&quot; IN (2038,2039,2040,2041,2045,2046,2047,2115,2116,2117,2118,2123,2124,2125,2127,2128,2137,2138,2139,2140,2142,2160))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2144) AND (&quot;POA_CODE&quot; &lt;= 2158))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2745) AND (&quot;POA_CODE&quot; &lt;= 2751))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2753) AND (&quot;POA_CODE&quot; &lt;= 2786))" label="Western Sydney &amp; Blue Mountains" key="{54f13a42-18ee-44f6-a6cd-4feb0ec636e3}"/>
+          <rule symbol="4" filter="(&quot;POA_CODE&quot;  IN (2020,2049,2130,2131,2132,2133,2134,2135,2136,2141,2143,2555,2556,2557,2558,2559,2560,2752))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2161) AND&#xd;&#xa;(&quot;POA_CODE&quot; &lt;= 2179))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2190) &#xd;&#xa;AND (&quot;POA_CODE&quot; &lt;= 2203))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2205) AND (&quot;POA_CODE&quot; &lt;= 2234))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2563) AND (&quot;POA_CODE&quot; &lt;= 2574))" label="Southern &amp; South Western Sydney" key="{ee20c72c-4335-4818-a4f9-bc1ca7ef5aa1}"/>
+          <rule symbol="5" filter="((&quot;POA_CODE&quot; >= 2250) AND (&quot;POA_CODE&quot; &lt;= 2311))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2313) AND (&quot;POA_CODE&quot; &lt;= 2339))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2415) AND (&quot;POA_CODE&quot; &lt;= 2425))&#xd;&#xa;&#xd;&#xa;" label="Hunter &amp; Central Coast" key="{b39312c2-8372-4497-8e27-51a2a241ef35}"/>
+          <rule symbol="6" filter="(&quot;POA_CODE&quot; IN (2312,2426,2427,2898,2899))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2428) AND (&quot;POA_CODE&quot; &lt;= 2456))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2460) AND (&quot;POA_CODE&quot; &lt;= 2474))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2476) AND (&quot;POA_CODE&quot; &lt;= 2490))&#xd;&#xa;&#xd;&#xa;" label="North Coast &amp; Mid North Coast" key="{846b4bfc-0a87-4d08-ba17-c720149082d2}"/>
+          <rule symbol="7" filter="(&quot;POA_CODE&quot; IN (2475))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2340) AND (&quot;POA_CODE&quot; &lt;= 2385))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2388) AND (&quot;POA_CODE&quot; &lt;= 2411))&#xd;&#xa;&#xd;&#xa;" label="New England" key="{ee7b3c6b-00b1-4b36-a9de-a7012bde84de}"/>
+          <rule symbol="8" filter="(&quot;POA_CODE&quot; IN (2386,2387,2671,2672,2721,2804,2805,2806))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2787) AND (&quot;POA_CODE&quot; &lt;= 2800))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2808) AND (&quot;POA_CODE&quot; &lt;= 2880))&#xd;&#xa;&#xd;&#xa;" label="Western NSW" key="{b2fbc4b3-b9cd-445e-8387-882de7796929}"/>
+          <rule symbol="9" filter="(&quot;POA_CODE&quot; IN (2675,2678,2720,2803,2807))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2585) AND (&quot;POA_CODE&quot; &lt;= 2594))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2640) AND (&quot;POA_CODE&quot; &lt;= 2663))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2665) AND (&quot;POA_CODE&quot; &lt;= 2669))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2680) AND (&quot;POA_CODE&quot; &lt;= 2717))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2722) AND (&quot;POA_CODE&quot; &lt;= 2739))&#xd;&#xa;&#xd;&#xa;" label="Riverina" key="{8c77a853-b1be-4f4c-a4dd-6c307e303a89}"/>
+          <rule symbol="10" filter=" ((&quot;POA_CODE&quot; >= 2500) AND (&quot;POA_CODE&quot; &lt;= 2551))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2575) AND (&quot;POA_CODE&quot; &lt;= 2584))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2600) AND (&quot;POA_CODE&quot; &lt;= 2633))&#xd;&#xa;&#xd;&#xa;OR ((&quot;POA_CODE&quot; >= 2900) AND (&quot;POA_CODE&quot; &lt;= 2914))&#xd;&#xa;&#xd;&#xa;&#xd;&#xa;" label="Illawarra &amp; South East NSW" key="{335ff188-cd4f-49d4-8e2d-d7620198b1bb}"/>
+        </rules>
+        <symbols>
+          <symbol type="fill" name="0" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="70,67,167,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="1" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="46,150,100,178" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="10" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="69,155,62,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="2" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="226,9,197,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="3" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="242,156,208,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="4" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="232,143,159,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="5" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="41,113,129,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="6" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="42,46,246,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="7" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="60,68,223,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="8" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="112,191,155,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+          <symbol type="fill" name="9" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleFill">
+              <prop v="3x:0,0,0,0,0,0" k="border_width_map_unit_scale"/>
+              <prop v="131,94,82,255" k="color"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.26" k="outline_width"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="solid" k="style"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+      </renderer-v2>
+      <customproperties>
+        <property key="dualview/previewExpressions" value="POA_NAME"/>
+        <property key="embeddedWidgets/count" value="0"/>
+        <property key="variableNames"/>
+        <property key="variableValues"/>
+      </customproperties>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <SingleCategoryDiagramRenderer diagramType="Histogram" attributeLegend="1">
+        <DiagramCategory lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" penAlpha="255" backgroundAlpha="255" maxScaleDenominator="1e+8" sizeScale="3x:0,0,0,0,0,0" minScaleDenominator="0" sizeType="MM" diagramOrientation="Up" height="15" rotationOffset="270" scaleBasedVisibility="0" backgroundColor="#ffffff" penColor="#000000" opacity="1" barWidth="5" width="15" enabled="0" scaleDependency="Area" labelPlacementMethod="XHeight" minimumSize="0" penWidth="0">
+          <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
+          <attribute color="#000000" label="" field=""/>
+        </DiagramCategory>
+      </SingleCategoryDiagramRenderer>
+      <DiagramLayerSettings zIndex="0" linePlacementFlags="18" placement="0" priority="0" obstacle="0" dist="0" showAll="1">
+        <properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </properties>
+      </DiagramLayerSettings>
+      <fieldConfiguration>
+        <field name="POA_CODE">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="POA_NAME">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="SQKM">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias index="0" name="" field="POA_CODE"/>
+        <alias index="1" name="" field="POA_NAME"/>
+        <alias index="2" name="" field="SQKM"/>
+      </aliases>
+      <excludeAttributesWMS/>
+      <excludeAttributesWFS/>
+      <defaults>
+        <default expression="" applyOnUpdate="0" field="POA_CODE"/>
+        <default expression="" applyOnUpdate="0" field="POA_NAME"/>
+        <default expression="" applyOnUpdate="0" field="SQKM"/>
+      </defaults>
+      <constraints>
+        <constraint notnull_strength="0" constraints="0" field="POA_CODE" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="POA_NAME" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="SQKM" unique_strength="0" exp_strength="0"/>
+      </constraints>
+      <constraintExpressions>
+        <constraint exp="" field="POA_CODE" desc=""/>
+        <constraint exp="" field="POA_NAME" desc=""/>
+        <constraint exp="" field="SQKM" desc=""/>
+      </constraintExpressions>
+      <attributeactions>
+        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+      </attributeactions>
+      <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
+        <columns>
+          <column hidden="0" type="field" name="POA_CODE" width="-1"/>
+          <column hidden="0" type="field" name="POA_NAME" width="-1"/>
+          <column hidden="0" type="field" name="SQKM" width="-1"/>
+          <column hidden="1" type="actions" width="-1"/>
+        </columns>
+      </attributetableconfig>
+      <editform>.</editform>
+      <editforminit/>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode><![CDATA[# -*- coding: utf-8 -*-
+"""
+QGIS forms can have a Python function that is called when the form is
+opened.
+
+Use this function to add extra logic to your forms.
+
+Enter the name of the function in the "Python Init function"
+field.
+An example follows:
+"""
+from qgis.PyQt.QtWidgets import QWidget
+
+def my_form_open(dialog, layer, feature):
+	geom = feature.geometry()
+	control = dialog.findChild(QWidget, "MyLineEdit")
+]]></editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable>
+        <field name="POA_CODE" editable="1"/>
+        <field name="POA_NAME" editable="1"/>
+        <field name="SQKM" editable="1"/>
+      </editable>
+      <labelOnTop>
+        <field name="POA_CODE" labelOnTop="0"/>
+        <field name="POA_NAME" labelOnTop="0"/>
+        <field name="SQKM" labelOnTop="0"/>
+      </labelOnTop>
+      <widgets/>
+      <conditionalstyles>
+        <rowstyles/>
+        <fieldstyles/>
+      </conditionalstyles>
+      <expressionfields/>
+      <previewExpression>POA_NAME</previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+    <maplayer geometry="Point" autoRefreshEnabled="0" refreshOnNotifyEnabled="0" simplifyLocal="1" simplifyDrawingHints="0" labelsEnabled="0" minScale="1e+8" simplifyDrawingTol="1" simplifyAlgorithm="0" readOnly="0" autoRefreshTime="0" type="vector" simplifyMaxScale="1" maxScale="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyMessage="">
+      <extent>
+        <xmin>151.00937600000000316</xmin>
+        <ymin>-33.81275000000000119</ymin>
+        <xmax>151.00937600000000316</xmax>
+        <ymax>-33.81275000000000119</ymax>
+      </extent>
+      <id>parra_centre_6f1535b1_b4d7_48a7_a35a_c3b2a116e4f5</id>
+      <datasource>file:./parra_centre.csv?type=csv&amp;xField=Longitude&amp;yField=Latitude&amp;crs=EPSG:4326&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=no</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>parra_centre</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+          <srsid>3452</srsid>
+          <srid>4326</srid>
+          <authid>EPSG:4326</authid>
+          <description>WGS 84</description>
+          <projectionacronym>longlat</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>true</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial minx="0" maxx="0" minz="0" dimensions="2" crs="" maxz="0" miny="0" maxy="0"/>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links/>
+      </resourceMetadata>
+      <provider encoding="System">delimitedtext</provider>
+      <vectorjoins/>
+      <layerDependencies/>
+      <dataDependencies/>
+      <expressionfields/>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <auxiliaryLayer/>
+      <renderer-v2 enableorderby="0" type="singleSymbol" symbollevels="0" forceraster="0">
+        <symbols>
+          <symbol type="marker" name="0" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
+              <prop v="0" k="angle"/>
+              <prop v="219,30,42,255" k="color"/>
+              <prop v="1" k="horizontal_anchor_point"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="circle" k="name"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="128,17,25,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0.4" k="outline_width"/>
+              <prop v="3x:0,0,0,0,0,0" k="outline_width_map_unit_scale"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="diameter" k="scale_method"/>
+              <prop v="4" k="size"/>
+              <prop v="3x:0,0,0,0,0,0" k="size_map_unit_scale"/>
+              <prop v="MM" k="size_unit"/>
+              <prop v="1" k="vertical_anchor_point"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation/>
+        <sizescale/>
+      </renderer-v2>
+      <customproperties>
+        <property key="dualview/previewExpressions" value="Latitude"/>
+        <property key="embeddedWidgets/count" value="0"/>
+        <property key="variableNames"/>
+        <property key="variableValues"/>
+      </customproperties>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <SingleCategoryDiagramRenderer diagramType="Histogram" attributeLegend="1">
+        <DiagramCategory lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" penAlpha="255" backgroundAlpha="255" maxScaleDenominator="1e+8" sizeScale="3x:0,0,0,0,0,0" minScaleDenominator="0" sizeType="MM" diagramOrientation="Up" height="15" rotationOffset="270" scaleBasedVisibility="0" backgroundColor="#ffffff" penColor="#000000" opacity="1" barWidth="5" width="15" enabled="0" scaleDependency="Area" labelPlacementMethod="XHeight" minimumSize="0" penWidth="0">
+          <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
+          <attribute color="#000000" label="" field=""/>
+        </DiagramCategory>
+      </SingleCategoryDiagramRenderer>
+      <DiagramLayerSettings zIndex="0" linePlacementFlags="18" placement="0" priority="0" obstacle="0" dist="0" showAll="1">
+        <properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </properties>
+      </DiagramLayerSettings>
+      <fieldConfiguration>
+        <field name="Latitude">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="Longitude">
+          <editWidget type="TextEdit">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="Radius_km">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias index="0" name="" field="Latitude"/>
+        <alias index="1" name="" field="Longitude"/>
+        <alias index="2" name="" field="Radius_km"/>
+      </aliases>
+      <excludeAttributesWMS/>
+      <excludeAttributesWFS/>
+      <defaults>
+        <default expression="" applyOnUpdate="0" field="Latitude"/>
+        <default expression="" applyOnUpdate="0" field="Longitude"/>
+        <default expression="" applyOnUpdate="0" field="Radius_km"/>
+      </defaults>
+      <constraints>
+        <constraint notnull_strength="0" constraints="0" field="Latitude" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="Longitude" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="Radius_km" unique_strength="0" exp_strength="0"/>
+      </constraints>
+      <constraintExpressions>
+        <constraint exp="" field="Latitude" desc=""/>
+        <constraint exp="" field="Longitude" desc=""/>
+        <constraint exp="" field="Radius_km" desc=""/>
+      </constraintExpressions>
+      <attributeactions>
+        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+      </attributeactions>
+      <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
+        <columns>
+          <column hidden="0" type="field" name="Latitude" width="-1"/>
+          <column hidden="0" type="field" name="Longitude" width="-1"/>
+          <column hidden="1" type="actions" width="-1"/>
+        </columns>
+      </attributetableconfig>
+      <editform>.</editform>
+      <editforminit/>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode><![CDATA[# -*- coding: utf-8 -*-
+"""
+QGIS forms can have a Python function that is called when the form is
+opened.
+
+Use this function to add extra logic to your forms.
+
+Enter the name of the function in the "Python Init function"
+field.
+An example follows:
+"""
+from qgis.PyQt.QtWidgets import QWidget
+
+def my_form_open(dialog, layer, feature):
+	geom = feature.geometry()
+	control = dialog.findChild(QWidget, "MyLineEdit")
+]]></editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable>
+        <field name="Latitude" editable="1"/>
+        <field name="Longitude" editable="1"/>
+      </editable>
+      <labelOnTop>
+        <field name="Latitude" labelOnTop="0"/>
+        <field name="Longitude" labelOnTop="0"/>
+      </labelOnTop>
+      <widgets/>
+      <conditionalstyles>
+        <rowstyles/>
+        <fieldstyles/>
+      </conditionalstyles>
+      <expressionfields/>
+      <previewExpression>Latitude</previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+    <maplayer geometry="Point" autoRefreshEnabled="0" refreshOnNotifyEnabled="0" simplifyLocal="1" simplifyDrawingHints="1" labelsEnabled="0" minScale="1e+8" simplifyDrawingTol="1" simplifyAlgorithm="0" readOnly="0" autoRefreshTime="0" type="vector" simplifyMaxScale="1" maxScale="0" hasScaleBasedVisibilityFlag="0" refreshOnNotifyMessage="">
+      <extent>
+        <xmin>-100.94583000000000084</xmin>
+        <ymin>-41.45306000000000068</ymin>
+        <xmax>167.94900000000001228</xmax>
+        <ymax>41.97013499999999908</ymax>
+      </extent>
+      <id>stayz_nsw_extract_2018_03_10_05c0d407_e2e3_48f8_bf34_d2b0a3a55e36</id>
+      <datasource>file:./stayz_nsw_extract_2018-03-10.csv?type=csv&amp;xField=lng&amp;yField=lat&amp;crs=EPSG:4326&amp;spatialIndex=no&amp;subsetIndex=no&amp;watchFile=no</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>stayz_nsw_extract_2018-03-10</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+          <srsid>3452</srsid>
+          <srid>4326</srid>
+          <authid>EPSG:4326</authid>
+          <description>WGS 84</description>
+          <projectionacronym>longlat</projectionacronym>
+          <ellipsoidacronym>WGS84</ellipsoidacronym>
+          <geographicflag>true</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+        <links/>
+      </resourceMetadata>
+      <provider encoding="System">delimitedtext</provider>
+      <vectorjoins/>
+      <layerDependencies/>
+      <dataDependencies/>
+      <expressionfields/>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <auxiliaryLayer/>
+      <renderer-v2 enableorderby="0" type="singleSymbol" symbollevels="0" forceraster="0">
+        <symbols>
+          <symbol type="marker" name="0" alpha="1" clip_to_extent="1">
+            <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
+              <prop v="0" k="angle"/>
+              <prop v="105,168,175,255" k="color"/>
+              <prop v="1" k="horizontal_anchor_point"/>
+              <prop v="bevel" k="joinstyle"/>
+              <prop v="circle" k="name"/>
+              <prop v="0,0" k="offset"/>
+              <prop v="3x:0,0,0,0,0,0" k="offset_map_unit_scale"/>
+              <prop v="MM" k="offset_unit"/>
+              <prop v="35,35,35,255" k="outline_color"/>
+              <prop v="solid" k="outline_style"/>
+              <prop v="0" k="outline_width"/>
+              <prop v="3x:0,0,0,0,0,0" k="outline_width_map_unit_scale"/>
+              <prop v="MM" k="outline_width_unit"/>
+              <prop v="diameter" k="scale_method"/>
+              <prop v="2" k="size"/>
+              <prop v="3x:0,0,0,0,0,0" k="size_map_unit_scale"/>
+              <prop v="MM" k="size_unit"/>
+              <prop v="1" k="vertical_anchor_point"/>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation/>
+        <sizescale/>
+      </renderer-v2>
+      <customproperties/>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <fieldConfiguration>
+        <field name="property_id">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="lat">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="lng">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="guests">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+        <field name="init_price">
+          <editWidget type="">
+            <config>
+              <Option/>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias index="0" name="" field="property_id"/>
+        <alias index="1" name="" field="lat"/>
+        <alias index="2" name="" field="lng"/>
+        <alias index="3" name="" field="guests"/>
+        <alias index="4" name="" field="init_price"/>
+      </aliases>
+      <excludeAttributesWMS/>
+      <excludeAttributesWFS/>
+      <defaults>
+        <default expression="" applyOnUpdate="0" field="property_id"/>
+        <default expression="" applyOnUpdate="0" field="lat"/>
+        <default expression="" applyOnUpdate="0" field="lng"/>
+        <default expression="" applyOnUpdate="0" field="guests"/>
+        <default expression="" applyOnUpdate="0" field="init_price"/>
+      </defaults>
+      <constraints>
+        <constraint notnull_strength="0" constraints="0" field="property_id" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="lat" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="lng" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="guests" unique_strength="0" exp_strength="0"/>
+        <constraint notnull_strength="0" constraints="0" field="init_price" unique_strength="0" exp_strength="0"/>
+      </constraints>
+      <constraintExpressions>
+        <constraint exp="" field="property_id" desc=""/>
+        <constraint exp="" field="lat" desc=""/>
+        <constraint exp="" field="lng" desc=""/>
+        <constraint exp="" field="guests" desc=""/>
+        <constraint exp="" field="init_price" desc=""/>
+      </constraintExpressions>
+      <attributeactions>
+        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+      </attributeactions>
+      <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
+        <columns/>
+      </attributetableconfig>
+      <editform>.</editform>
+      <editforminit/>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode><![CDATA[]]></editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable/>
+      <labelOnTop/>
+      <widgets/>
+      <conditionalstyles>
+        <rowstyles/>
+        <fieldstyles/>
+      </conditionalstyles>
+      <expressionfields/>
+      <previewExpression></previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+  </projectlayers>
+  <layerorder>
+    <layer id="stayz_nsw_extract_2018_03_10_05c0d407_e2e3_48f8_bf34_d2b0a3a55e36"/>
+    <layer id="POA_2011_AUST_ebda2b6a_49b2_493a_b010_6eb8d410ec72"/>
+    <layer id="parra_centre_6f1535b1_b4d7_48a7_a35a_c3b2a116e4f5"/>
+  </layerorder>
+  <properties>
+    <SpatialRefSys>
+      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
+    </SpatialRefSys>
+    <PAL>
+      <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
+      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
+      <CandidatesPoint type="int">16</CandidatesPoint>
+      <ShowingCandidates type="bool">false</ShowingCandidates>
+      <ShowingAllLabels type="bool">false</ShowingAllLabels>
+      <CandidatesPolygon type="int">30</CandidatesPolygon>
+      <DrawRectOnly type="bool">false</DrawRectOnly>
+      <CandidatesLine type="int">50</CandidatesLine>
+      <SearchMethod type="int">0</SearchMethod>
+    </PAL>
+    <Measurement>
+      <DistanceUnits type="QString"></DistanceUnits>
+      <AreaUnits type="QString"></AreaUnits>
+    </Measurement>
+    <Gui>
+      <CanvasColorRedPart type="int">255</CanvasColorRedPart>
+      <SelectionColorBluePart type="int">0</SelectionColorBluePart>
+      <CanvasColorBluePart type="int">255</CanvasColorBluePart>
+      <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
+      <CanvasColorGreenPart type="int">255</CanvasColorGreenPart>
+      <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
+      <SelectionColorRedPart type="int">255</SelectionColorRedPart>
+    </Gui>
+    <PositionPrecision>
+      <DecimalPlaces type="int">2</DecimalPlaces>
+      <Automatic type="bool">true</Automatic>
+    </PositionPrecision>
+    <Legend>
+      <filterByMap type="bool">false</filterByMap>
+    </Legend>
+    <Paths>
+      <Absolute type="bool">false</Absolute>
+    </Paths>
+    <Measure>
+      <Ellipsoid type="QString">WGS84</Ellipsoid>
+    </Measure>
+  </properties>
+  <visibility-presets/>
+  <transformContext/>
+  <Annotations/>
+  <Layouts/>
+</qgis>
