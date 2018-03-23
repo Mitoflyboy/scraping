@@ -44,10 +44,10 @@
   <mapcanvas annotationsVisible="1" name="theMapCanvas">
     <units>degrees</units>
     <extent>
-      <xmin>147.66547625306614577</xmin>
-      <ymin>-35.62404254208906451</ymin>
-      <xmax>153.41620849679659955</xmax>
-      <ymax>-31.62296403867441796</ymax>
+      <xmin>144.3095033940178098</xmin>
+      <ymin>-38.08285660547846874</ymin>
+      <xmax>158.78447431411026969</xmax>
+      <ymax>-28.01187911403420117</ymax>
     </extent>
     <rotation>0</rotation>
     <destinationsrs>
@@ -980,9 +980,9 @@ def my_form_open(dialog, layer, feature):
     <PAL>
       <CandidatesLine type="int">50</CandidatesLine>
       <DrawRectOnly type="bool">false</DrawRectOnly>
-      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
       <CandidatesPoint type="int">16</CandidatesPoint>
       <CandidatesPolygon type="int">30</CandidatesPolygon>
+      <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
       <DrawOutlineLabels type="bool">true</DrawOutlineLabels>
       <ShowingAllLabels type="bool">false</ShowingAllLabels>
       <SearchMethod type="int">0</SearchMethod>
