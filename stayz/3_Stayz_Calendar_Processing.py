@@ -18,8 +18,8 @@ import numpy as np
 # In[2]:
 
 
-#date_str = datetime.datetime.now().strftime("%Y-%m-%d")
-date_str = '2018-03-12'
+date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+#date_str = '2018-03-12'
 
 js = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar/stayz_calendar_' + date_str + '.json.zip')
 
