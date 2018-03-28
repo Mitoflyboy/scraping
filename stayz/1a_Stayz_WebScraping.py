@@ -46,22 +46,45 @@ class Stayz_Listing(scrapy.Item):
     bathrooms = scrapy.Field()
     property_type = scrapy.Field()
     reviews = scrapy.Field()
-    #rating = scrapy.Field()
-    #suburb = scrapy.Field()
-    #postcode = scrapy.Field()
-    #google_addr = scrapy.Field()
-    #house_specs = scrapy.Field()
+    page_nbr = scrapy.Field()
+    page_pos = scrapy.Field()
     scraped_date = scrapy.Field()
     syd_brg_deg = scrapy.Field()
     syd_brg = scrapy.Field()
     syd_dist_km = scrapy.Field()
-    page_nbr = scrapy.Field()
-    listing_nbr = scrapy.Field()
     
         
 
 
 # In[3]:
+#date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+
+def get_base_urls():
+    date_str ='2018-03-22'
+
+    # Read the data file and display
+    nsw_data = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + date_str + '.json.zip')
+
+    nsw_urls = nsw_data['url']
+
+    # List to keep all the base urls
+    base_urls = []
+
+    for u in nsw_urls:
+
+        u_s = u.split('/')
+
+        suburb = u_s[-2]
+        area = u_s[-3]
+
+        url = 'https://www.stayz.com.au/accommodation/nsw/' + area + '/' + suburb
+
+        if url not in base_urls:
+            base_urls.append(url)
+
+    #rint(base_urls)
+    return base_urls
+
 
 
 # In[4]:
@@ -75,9 +98,12 @@ class StayzSpider(scrapy.Spider):
     # Full scrape - NSW
     #start_urls = ['https://www.stayz.com.au/accommodation/nsw']
 
-    start_urls = ['https://www.stayz.com.au/accommodation/nsw/south-coast/mollymook'
-    ,'https://www.stayz.com.au/accommodation/nsw/sydney/liverpool'
-    ,'https://www.stayz.com.au/accommodation/nsw/central-coast/bulli']
+    #start_urls = ['https://www.stayz.com.au/accommodation/nsw/south-coast/mollymook'
+    #,'https://www.stayz.com.au/accommodation/nsw/sydney/liverpool'
+    #,'https://www.stayz.com.au/accommodation/nsw/central-coast/bulli']
+
+    start_urls = get_base_urls()
+    # Check each of the 
     
     # Forbes - has 3 properties on one listing page
     #start_urls = ['https://www.stayz.com.au/accommodation/nsw/explorer-country/forbes']
@@ -98,13 +124,10 @@ class StayzSpider(scrapy.Spider):
         'LOG_LEVEL': logging.WARNING,
         #'ITEM_PIPELINES': {'__main__.JsonWriterPipeline': 1}, #Used for pipeline 1
         'FEED_FORMAT':'json', # Used for pipeline 2
-        'FEED_URI': '/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + datetime.datetime.now().strftime("%Y-%m-%d") + '.json' #Used for pipeline 2
+        'FEED_URI': '/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/c_stayz_nsw_extract_' + datetime.datetime.now().strftime("%Y-%m-%d") + '.json' #Used for pipeline 2
     }
     
     url_pages = []
-
-    # Track the listing position of each property within its suburb results
-    n_list_pos = 1
     
     def calculate_initial_compass_bearing(self, pointA, pointB):
         """
@@ -178,33 +201,37 @@ class StayzSpider(scrapy.Spider):
             compass_dir = 'UN'
 
         return (int(compass_bearing), compass_dir, int(syd_distance_km))
-
-    def start_requests(self):
-        print("Starting....")
     
     def parse(self, response):
-
-        # 'parse' is called for each URL in the starting list
         
         sel = Selector(response)
 
-        # For each starting URL track the listing position
-        #self.n_list_pos = 1
-        self.n_list_pos = response.meta.get('n_list_pos')
+        # Get the page number here from the metadata!
+        # Just get page number from the URL!
+        url = response.url
 
+        # IF it matches page=1 then get the page number
+        pn = re.search('\d+', url)
 
+        if pn is None:
+            #print("NO PAGE NUMBER FOUND")
+            page_nbr = 1
 
-        # Get the list of the individual property's on this summary page               
+        else:
+            #print("Found page: " + pn.group(0))
+            page_nbr = pn.group(0)
+            
+               
         urls = sel.xpath('//section[@class="c-search-results__main"]/div/article/div/div/div/h3/a/@href').extract()
+
+        page_pos = 1
                 
         for u in urls:
-        
-            request = scrapy.Request('https://www.stayz.com.au/'+ u, callback=self.parse_results, meta={'n_list_pos': self.n_list_pos})
 
-            print("Item listing {0}".format(self.n_list_pos))
-            print("Request response: {0}" .format(request))
+            # Pass the page number as a parameter. Count the number of items on each page
+            request = scrapy.Request('https://www.stayz.com.au'+ u, callback=self.parse_results, meta={'page_nbr': page_nbr, 'page_pos': page_pos } )
 
-            self.n_list_pos += 1
+            page_pos += 1
             
             yield request
             
@@ -214,13 +241,15 @@ class StayzSpider(scrapy.Spider):
         if len(url_pages) > 0:
             nextPage = url_pages[-1]
         
-            nextPageURL = 'https://www.stayz.com.au/'+ nextPage
+            nextPageURL = 'https://www.stayz.com.au'+ nextPage
         
             print("Next URL: " + str(nextPage))
-        
-            yield(scrapy.Request(nextPageURL, callback=self.parse))
 
-            
+
+            # Parse the next front page
+            request = scrapy.Request(nextPageURL, callback=self.parse, )
+        
+            yield request
             
     def strip_whitespace(self, st):
     
@@ -230,9 +259,11 @@ class StayzSpider(scrapy.Spider):
                 
     def parse_results(self, response):
 
-        #print("Parsing page " + str(n_page))
+        # Get the page number details
+        n_page_nbr = response.meta['page_nbr']
+        n_page_pos = response.meta['page_pos']
 
-        n_list_pos = response.meta.get('n_list_pos')
+        #print("Page: {0} Position: {1}".format(n_page_nbr,n_page_pos))
         
         # Property ID - unique for each property
         p_id1 = response.selector.xpath('//article/header/ol/li/span/span/text()').extract_first()
@@ -352,18 +383,13 @@ class StayzSpider(scrapy.Spider):
         p['bathrooms'] = n_bathrooms
         p['description_full'] = p_description_full
         p['property_type'] = p_property_type
-        #p['rating'] = p_rating
         p['reviews'] = p_reviews
-        #p['suburb'] = p_suburb
-        #p['postcode'] = p_postcode
-        #p['house_specs'] = p_house_specs
-        #p['google_addr'] = google_addr.text
         p['syd_dist_km'] = p_syd_distance_km
         p['syd_brg_deg'] = p_compass_bearing
         p['syd_brg'] = p_dir
         p['scraped_date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        #p['page_nbr'] = n_page
-        p['listing_nbr'] = n_list_pos
+        p['page_nbr'] = n_page_nbr
+        p['page_pos'] = n_page_pos
         
         yield p        
 
@@ -375,4 +401,3 @@ process = CrawlerProcess({ 'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Win
 
 process.crawl(StayzSpider) 
 process.start()
-
