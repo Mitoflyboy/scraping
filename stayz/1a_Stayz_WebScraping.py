@@ -11,7 +11,6 @@ import pandas as pd
 import json
 import distutils
 import scrapy
-import datetime
 import requests
 import json
 import logging
@@ -22,6 +21,7 @@ from scrapy.selector import Selector
 from requests import Request
 from math import sin, cos, sqrt, atan2, radians
 from decimal import Decimal
+from datetime import datetime, timedelta
 import math
 
 # approximate radius of earth in km
@@ -57,30 +57,45 @@ class Stayz_Listing(scrapy.Item):
 
 
 # In[3]:
-#date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+date_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-def get_base_urls():
-    date_str ='2018-03-22'
+def get_base_urls(by_area=False):
+
+    # Use the previous days extract to run todays suburbs
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d") - timedelta(days=1)
+
+    #date_str ='2018-04-01'
 
     # Read the data file and display
-    nsw_data = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + date_str + '.json.zip')
+    nsw_data = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + date_str + '.json')
 
     nsw_urls = nsw_data['url']
 
     # List to keep all the base urls
     base_urls = []
 
-    for u in nsw_urls:
+    # If we want the breakdown by individual area then call with by_area = True
+    if by_area:
 
-        u_s = u.split('/')
+        print("Collecting by individual area...")
 
-        suburb = u_s[-2]
-        area = u_s[-3]
+        for u in nsw_urls:
 
-        url = 'https://www.stayz.com.au/accommodation/nsw/' + area + '/' + suburb
+            u_s = u.split('/')
 
-        if url not in base_urls:
-            base_urls.append(url)
+            suburb = u_s[-2]
+            area = u_s[-3]
+
+            url = 'https://www.stayz.com.au/accommodation/nsw/' + area + '/' + suburb
+
+            if url not in base_urls:
+                base_urls.append(url)
+    else:
+        print("Collecing for whole state of NSW")
+        base_urls.append('https://www.stayz.com.au/accommodation/nsw')
+
+
+    # Find why the others were not identified?? 4k missing??
 
     #rint(base_urls)
     return base_urls
@@ -102,7 +117,7 @@ class StayzSpider(scrapy.Spider):
     #,'https://www.stayz.com.au/accommodation/nsw/sydney/liverpool'
     #,'https://www.stayz.com.au/accommodation/nsw/central-coast/bulli']
 
-    start_urls = get_base_urls()
+    start_urls = get_base_urls(True)
     # Check each of the 
     
     # Forbes - has 3 properties on one listing page
