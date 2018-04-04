@@ -57,17 +57,19 @@ class Stayz_Listing(scrapy.Item):
 
 
 # In[3]:
-date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+date_str = datetime.now().strftime("%Y-%m-%d")
 
 def get_base_urls(by_area=False):
 
     # Use the previous days extract to run todays suburbs
-    date_str = datetime.datetime.now().strftime("%Y-%m-%d") - timedelta(days=1)
+    date_str_prev1 = datetime.now() - timedelta(days=1)
+
+    date_str_prev = date_str_prev1.strftime("%Y-%m-%d")
 
     #date_str ='2018-04-01'
 
     # Read the data file and display
-    nsw_data = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + date_str + '.json')
+    nsw_data = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + date_str_prev + '.json')
 
     nsw_urls = nsw_data['url']
 
@@ -139,7 +141,7 @@ class StayzSpider(scrapy.Spider):
         'LOG_LEVEL': logging.WARNING,
         #'ITEM_PIPELINES': {'__main__.JsonWriterPipeline': 1}, #Used for pipeline 1
         'FEED_FORMAT':'json', # Used for pipeline 2
-        'FEED_URI': '/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/c_stayz_nsw_extract_' + datetime.datetime.now().strftime("%Y-%m-%d") + '.json' #Used for pipeline 2
+        'FEED_URI': '/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/c_stayz_nsw_extract_' + datetime.now().strftime("%Y-%m-%d") + '.json' #Used for pipeline 2
     }
     
     url_pages = []
@@ -402,7 +404,7 @@ class StayzSpider(scrapy.Spider):
         p['syd_dist_km'] = p_syd_distance_km
         p['syd_brg_deg'] = p_compass_bearing
         p['syd_brg'] = p_dir
-        p['scraped_date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        p['scraped_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         p['page_nbr'] = n_page_nbr
         p['page_pos'] = n_page_pos
         
