@@ -301,7 +301,7 @@ class StayzSpider(scrapy.Spider):
         
         # Full text of property details
         p_description_full = response.xpath('//div[@id="property-description-body"]/p/text()').extract_first()
-        
+
         # Reverse geocoding on Google API for street address:
         latlng = "" + p_lat + "," + p_lng 
         

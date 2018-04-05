@@ -120,6 +120,21 @@ with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extrac
 				# Check the current rating out of 5
 				review_rating = p_browser.find_elements_by_xpath('//*[@id="reviews"]/div[2]/header/span/span/span[2]/span[1]')
 
+				p_photo_1 = p_browser.find_elements_by_xpath('//*[@id="slick-gallery-counter"]')
+
+				try:
+					p_photo_2 = p_photo_1[0].text
+
+					p_photo_3 = re.search('(\d+)\s*of\s*(\d+)', p_photo_2)
+
+					p_nbr_photos = p_photo_3.group(2)
+
+
+
+				except IndexError as ie:
+					p_nbr_photos = 0
+
+
 				# Find the review which also has the decimal rating. This is the first review
 				rev = [x.text for x in review_rating]
 
@@ -140,17 +155,19 @@ with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extrac
 					'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 					'review_value' : review_value,
 					'review_count' : review_count,
-					'calendar' : cal_text
+					'calendar' : cal_text,
+					'p_nbr_photos': p_nbr_photos
 				}
 
 			except selenium.common.exceptions.TimeoutException as te:
 				log.info(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " : Timed out... skipping " + property_url)
 				pd = {
-					'property_id' : '0000',
+					'property_id' : 0,
 					'ext_at': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-					'review_value' : '0',
-					'review_count' : '0',
-					'calendar' : property_url
+					'review_value' : 0,
+					'review_count' : 0,
+					'calendar' : property_url,
+					'p_nbr_photos' : 0
 				}
 
 			if first_page is True:
