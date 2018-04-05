@@ -14,6 +14,7 @@ import logging
 # Constants:
 
 date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+
 date_time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 
@@ -129,10 +130,17 @@ with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extrac
 
 					p_nbr_photos = p_photo_3.group(2)
 
-
-
 				except IndexError as ie:
 					p_nbr_photos = 0
+
+				# Extract the features
+				p_feat_1 = p_browser.find_elements_by_xpath('//*[@id="property-features"]/div[2]')
+				try:
+					p_features = p_feat_1[0].text
+
+				except IndexError as ie:
+					p_features = ''
+
 
 
 				# Find the review which also has the decimal rating. This is the first review
@@ -156,7 +164,8 @@ with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extrac
 					'review_value' : review_value,
 					'review_count' : review_count,
 					'calendar' : cal_text,
-					'p_nbr_photos': p_nbr_photos
+					'photos': p_nbr_photos,
+					'features': p_features
 				}
 
 			except selenium.common.exceptions.TimeoutException as te:
@@ -167,7 +176,8 @@ with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extrac
 					'review_value' : 0,
 					'review_count' : 0,
 					'calendar' : property_url,
-					'p_nbr_photos' : 0
+					'photos' : 0,
+					'features': p_features
 				}
 
 			if first_page is True:
