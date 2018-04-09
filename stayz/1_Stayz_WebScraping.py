@@ -23,6 +23,7 @@ from requests import Request
 from math import sin, cos, sqrt, atan2, radians
 from decimal import Decimal
 import math
+from collections import Counter
 
 # approximate radius of earth in km
 R = 6373.0
@@ -40,6 +41,7 @@ class Stayz_Listing(scrapy.Item):
     guests = scrapy.Field()
     heading = scrapy.Field()
     description_full = scrapy.Field()
+    description_wc = scrapy.Field()
     url = scrapy.Field()
     bedrooms = scrapy.Field()
     beds = scrapy.Field()
@@ -72,6 +74,8 @@ class StayzSpider(scrapy.Spider):
     
     # Full scrape - NSW
     start_urls = ['https://www.stayz.com.au/accommodation/nsw']
+
+    #start_urls = ['https://www.stayz.com.au/accommodation/nsw/hunter/newcastle/9185654']
     
     # Forbes - has 3 properties on one listing page
     #start_urls = ['https://www.stayz.com.au/accommodation/nsw/explorer-country/forbes']
@@ -96,6 +100,27 @@ class StayzSpider(scrapy.Spider):
     }
     
     url_pages = []
+
+
+    # Filter the description and get the word count
+    def description_word_count(self, text):
+    
+	    # Cleaning text
+	    for char in '-.,\n':
+	        text=text.replace(char,' ')
+	        
+	    # All words lower case
+	    text = text.lower()
+	    
+	    # split returns a list of words delimited by sequences of whitespace (including tabs, newlines, etc, like re's \s) 
+	    word_list = text.split()
+
+	    cn = Counter(word_list).most_common()
+
+	    tot = sum(Counter(cn).values())
+	    
+	    return tot
+
     
     def calculate_initial_compass_bearing(self, pointA, pointB):
         """
@@ -300,7 +325,14 @@ class StayzSpider(scrapy.Spider):
             p_reviews = 0
         
         # Full text of property details
-        p_description_full = response.xpath('//div[@id="property-description-body"]/p/text()').extract_first()
+        p_description_full = response.xpath('//div[@id="property-description-body"]/p/text()').extract()
+
+        p_description_text = '\n'.join(p_description_full)
+
+        # Do a word count of the description
+
+        p_description_wc = self.description_word_count(p_description_text)
+
 
         # Reverse geocoding on Google API for street address:
         latlng = "" + p_lat + "," + p_lng 
@@ -319,6 +351,7 @@ class StayzSpider(scrapy.Spider):
         p['beds'] = n_beds
         p['bathrooms'] = n_bathrooms
         p['description_full'] = p_description_full
+        p['description_wc'] = p_description_wc
         p['property_type'] = p_property_type
         #p['rating'] = p_rating
         p['reviews'] = p_reviews

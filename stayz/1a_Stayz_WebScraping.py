@@ -34,25 +34,9 @@ R = 6373.0
 
 class Stayz_Listing(scrapy.Item):
     property_id = scrapy.Field()
-    lat = scrapy.Field()
-    lng = scrapy.Field()
-    init_price = scrapy.Field()
-    guests = scrapy.Field()
-    heading = scrapy.Field()
-    description_full = scrapy.Field()
-    url = scrapy.Field()
-    bedrooms = scrapy.Field()
-    beds = scrapy.Field()
-    bathrooms = scrapy.Field()
-    property_type = scrapy.Field()
-    reviews = scrapy.Field()
     page_nbr = scrapy.Field()
     page_pos = scrapy.Field()
-    scraped_date = scrapy.Field()
-    syd_brg_deg = scrapy.Field()
-    syd_brg = scrapy.Field()
-    syd_dist_km = scrapy.Field()
-    
+    scraped_date = scrapy.Field()    
         
 
 
@@ -120,6 +104,8 @@ class StayzSpider(scrapy.Spider):
     #,'https://www.stayz.com.au/accommodation/nsw/central-coast/bulli']
 
     start_urls = get_base_urls(True)
+    
+
     # Check each of the 
     
     # Forbes - has 3 properties on one listing page
@@ -146,78 +132,7 @@ class StayzSpider(scrapy.Spider):
     
     url_pages = []
     
-    def calculate_initial_compass_bearing(self, pointA, pointB):
-        """
-        Calculates the bearing between two points.
-        The formulae used is the following:
-            θ = atan2(sin(Δlong).cos(lat2),
-                      cos(lat1).sin(lat2) − sin(lat1).cos(lat2).cos(Δlong))
-        :Parameters:
-          - `pointA: The tuple representing the latitude/longitude for the
-            first point. Latitude and longitude must be in decimal degrees
-          - `pointB: The tuple representing the latitude/longitude for the
-            second point. Latitude and longitude must be in decimal degrees
-        :Returns:
-          The bearing in degrees
-        :Returns Type:
-          float
-        """
-        if (type(pointA) != tuple) or (type(pointB) != tuple):
-            raise TypeError("Only tuples are supported as arguments")
-
-        lat1 = math.radians(pointA[0])
-        lat2 = math.radians(pointB[0])
-        
-        lon1 = math.radians(pointA[1])
-        lon2 = math.radians(pointB[1])
-
-        diffLong = math.radians(pointB[1] - pointA[1])
-
-        x = math.sin(diffLong) * math.cos(lat2)
-        y = math.cos(lat1) * math.sin(lat2) - (math.sin(lat1)
-                * math.cos(lat2) * math.cos(diffLong))
-
-        initial_bearing = math.atan2(x, y)
-
-        # Now we have the initial bearing but math.atan2 return values
-        # from -180° to + 180° which is not what we want for a compass bearing
-        # The solution is to normalize the initial bearing as shown below
-        initial_bearing = math.degrees(initial_bearing)
-        compass_bearing = (initial_bearing + 360) % 360
-        
-        
-        # Calculate the straight line distance in km
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-
-        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-        syd_distance_km = int(R * c)
-        
-        
-        if compass_bearing >= 0.00 and compass_bearing < 22.50:
-            compass_dir = 'N'
-        elif compass_bearing >= 22.50 and compass_bearing < 67.5:
-            compass_dir = 'NE'
-        elif compass_bearing >= 67.5 and compass_bearing < 112.50:
-            compass_dir = 'E'
-        elif compass_bearing >= 112.5 and compass_bearing < 157.50:
-            compass_dir = 'SE'
-        elif compass_bearing >= 157.5 and compass_bearing < 202.50:
-            compass_dir = 'S'
-        elif compass_bearing >= 202.5 and compass_bearing < 247.50:
-            compass_dir = 'SW'
-        elif compass_bearing >= 247.5 and compass_bearing < 292.50:
-            compass_dir = 'W'
-        elif compass_bearing >= 292.5 and compass_bearing < 337.50:
-            compass_dir = 'NW'
-        elif compass_bearing >= 337.5 and compass_bearing <= 360.00:
-            compass_dir = 'N'
-        else:
-            compass_dir = 'UN'
-
-        return (int(compass_bearing), compass_dir, int(syd_distance_km))
+    
     
     def parse(self, response):
         
@@ -280,7 +195,6 @@ class StayzSpider(scrapy.Spider):
         n_page_nbr = response.meta['page_nbr']
         n_page_pos = response.meta['page_pos']
 
-        #print("Page: {0} Position: {1}".format(n_page_nbr,n_page_pos))
         
         # Property ID - unique for each property
         p_id1 = response.selector.xpath('//article/header/ol/li/span/span/text()').extract_first()
@@ -288,130 +202,17 @@ class StayzSpider(scrapy.Spider):
         p_id3 = re.sub(' +',' ', p_id2)
         p_id4 = re.search('\d+',p_id3)
         p_id = p_id4.group(0)
-
-        # Geographic location - not exact location, within a block of actual
-        # Error handling - if no lat/lon specified place in middle of Botany Harbour
-        p_lat = response.selector.xpath('//*[@class="c-map__container"]/@lat').extract_first()
-        if p_lat is None:
-            p_lat = '-33.990'
-        p_lng = response.selector.xpath('//*[@class="c-map__container"]/@lng').extract_first() 
-        if p_lng is None:
-            p_lng = '151.180'
-
-        #print("Distance to Sydney: {0} km" .format(p_syd_distance_km))
         
-        p_compass_bearing, p_dir, p_syd_distance_km = self.calculate_initial_compass_bearing((Decimal(-33.990),Decimal(151.180)),(Decimal(p_lat),Decimal(p_lng)))
-        #print("Distance: {2} Compass: {0} Heading: {1}" .format(p_compass_bearing, p_dir, p_syd_distance_km))
-        
-
-        # House configuration - number of guests
-        p_configuration = response.css(".c-facet__label.u-display--block::text").extract_first()
-        p_configuration = re.sub('\n','',p_configuration)
-        p_configuration = re.sub(' +',' ', p_configuration)
-        p_group = re.search('\d+', p_configuration)
-        p_guests = p_group.group(0)
-        
-        p_heading = response.css(".c-heading--brand.u-h2::text").extract_first()
-        
-        # Property type from the sub-heading - 'House, Mudgee'
-        p_pt_1 = response.selector.xpath('///html/body/main/section/div/article/header/p/small/text()').extract_first()
-        
-        if p_pt_1 is not None:
-            p_pt_1 = re.sub('\n','', p_pt_1)
-            p_pt_1 = re.sub(' +',' ', p_pt_1)
-            if re.search('B&B', p_pt_1):
-                p_property_type = 'B&B'
-            else:
-                p_pt_2 = re.search('\w+',p_pt_1)
-                p_property_type = p_pt_2.group(0)
-        else:
-            p_property_type = 'Unknown'
-        
-        p_house_specs = response.selector.xpath('//div[@class="c-facets c-facets--inline"]/div/span/span/text()').extract()
-        
-        # Initialize variables
-        n_bedrooms = 0
-        n_beds = 0
-        n_bathrooms = 0
-        
-        for j in p_house_specs:
-            if re.search('bedroom',j):
-                # Extract number of guests
-                n_br = re.search('\d+',j)
-                n_bedrooms = n_br.group(0)
-                
-            if re.search('bed[s]?$',j):
-                # Extract number of guests
-                n_bd = re.search('\d+',j)
-                n_beds = n_bd.group(0)
-                
-            if re.search('bathroom',j):
-                # Extract number of guests
-                n_bath = re.search('\d+',j)
-                n_bathrooms = n_bath.group(0)
-                
-                
-        # The basic price - 'From $xxx per night'        
-        p_ip_1 = response.selector.xpath('//header[@class="c-quote__header"]/p/span/span/span[@class="u-h1"]/text()').extract_first()
-        
-        p_init_price = 0
-        
-        if p_ip_1 is not None:
-            p_ip_3 = p_ip_1.replace(',','')
-            p_ip_4 = re.search('\d+',p_ip_3)
-            p_init_price = p_ip_4.group(0)
-        else:
-            p_init_price = 0
-        
-        # Ratings and reviews
-        p_rating = response.selector.xpath('//header[@class="c-reviews__header"]/span/span/span[@class="c-facet__label"]/span/text()').extract_first()
-        
-        p_r1 = response.selector.xpath('//html/body/main/section/div/article/header/p[2]/span/span[2]/small/text()').extract_first()
-        
-        # Initialise
-        p_reviews = 0
-        
-        if p_r1 is not None:
-            p_r2 = re.sub('\n','',p_r1)
-            p_r2 = re.sub(' +',' ',p_r2)
-            p_r3 = re.search('\d+', p_r2)
-            p_reviews = p_r3.group(0)
-        else:
-            p_reviews = 0
-        
-        # Full text of property details
-        p_description_full = response.xpath('//div[@id="property-description-body"]/p/text()').extract_first()
-        
-        # Reverse geocoding on Google API for street address:
-        latlng = "" + p_lat + "," + p_lng 
         
         print("Scanning Property ID: " + p_id + "-" + response.url)
         
         p = Stayz_Listing()
         p['property_id'] = p_id
-        p['lat'] = p_lat
-        p['lng'] = p_lng
-        p['guests'] = p_guests
-        p['heading'] = p_heading
-        p['url'] = response.url
-        p['init_price'] = p_init_price
-        p['bedrooms'] = n_bedrooms
-        p['beds'] = n_beds
-        p['bathrooms'] = n_bathrooms
-        p['description_full'] = p_description_full
-        p['property_type'] = p_property_type
-        p['reviews'] = p_reviews
-        p['syd_dist_km'] = p_syd_distance_km
-        p['syd_brg_deg'] = p_compass_bearing
-        p['syd_brg'] = p_dir
         p['scraped_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         p['page_nbr'] = n_page_nbr
         p['page_pos'] = n_page_pos
         
         yield p        
-
-
-# In[5]:
 
 
 process = CrawlerProcess({ 'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)' })
