@@ -21,7 +21,7 @@ import numpy as np
 date_str = datetime.datetime.now().strftime("%Y-%m-%d")
 #date_str = '2018-03-12'
 
-js = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar/stayz_calendar_' + date_str + '.json.zip')
+js = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar/stayz_calendar_' + date_str + '.json')
 
 #js = js.reset_index(drop=True)
 #js = js.set_index('property_id')
