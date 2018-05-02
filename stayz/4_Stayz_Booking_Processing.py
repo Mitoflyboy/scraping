@@ -76,7 +76,7 @@ for file in glob.glob("*.json"):
                 # Move to the next day.
                 # Breaks if they arrive on the last day of the 6th month!!!
                 min_dateIndex += 1
-                booking_days += 1
+                #booking_days += 1
                 
                 if(min_dateIndex < max_dateIndex): 
                     date = dates[min_dateIndex]
