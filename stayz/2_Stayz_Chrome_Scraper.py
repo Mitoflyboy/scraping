@@ -21,6 +21,7 @@ date_time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 # Specifying incognito mode as you launch your browser[OPTIONAL]
 option = webdriver.ChromeOptions()
 option.add_argument("--incognito")
+option.add_argument('headless')
 
 prefs = {"profile.managed_default_content_settings.images":2}
 option.add_experimental_option("prefs",prefs)
