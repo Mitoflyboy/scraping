@@ -49,7 +49,10 @@ import glob, os
 
 os.chdir("/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar")
 
-for file in glob.glob("*.json.zip"):
+
+for file in glob.glob("*2018-05-20.json"):
+
+#for file in glob.glob("*.json.zip"):
 
 
     print("Filename: " + file)

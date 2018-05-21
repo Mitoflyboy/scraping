@@ -2,7 +2,7 @@
 -- Version 0.1
 -- Date: 2018-04-19
 
-COPY stayzdb.stayz_bookings_load FROM '/Users/taj/GitHub/scraping/stayz/WebData/nsw_bookings/test_book_2018-04-01.csv' WITH (FORMAT csv, HEADER);
+COPY stayzdb.stayz_bookings_load FROM '/Users/taj/GitHub/scraping/stayz/WebData/nsw_bookings/csv/stayz_bookings_2018-04-01.csv' WITH (FORMAT csv, HEADER);
 COMMIT;
 
 --select * from stayzdb.stayz_bookings
