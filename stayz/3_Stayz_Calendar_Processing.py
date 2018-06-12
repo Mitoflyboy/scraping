@@ -50,21 +50,23 @@ import glob, os
 os.chdir("/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar")
 
 
-for file in glob.glob("*2018-05-20.json"):
+#for file in glob.glob("*2018-05-20.json"):
 
 #for file in glob.glob("*.json.zip"):
+for file in glob.glob("stayz_calendar_9168471.json"):
 
 
     print("Filename: " + file)
 
     first_page = True
 
-    
-    d = datetime.date.today()
-    mr = monthrange(d.year, d.month )
+    # THIS IS NOT TRUE!!!!
+    # GET THE date from the filename, or the ext_at field??
+    #d = datetime.date.today()
+    #mr = monthrange(d.year, d.month )
 
-    cur_month = d.month
-    cur_year = d.year
+    #cur_month = d.month
+    #cur_year = d.year
 
 
     js = pd.read_json('/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar/' + file)
@@ -76,9 +78,16 @@ for file in glob.glob("*2018-05-20.json"):
         
         all_months = {}
         
-        cur_month = d.month
+        #cur_month = d.month
 
         raw_cal = "<html><body><table>" + row['calendar'] + "</table></body></html>"
+
+        extracted_date = row['ext_at']
+
+        print("Extracted Date: " + extracted_date.strftime("%Y-%m-%d") )
+
+        cur_year = extracted_date.year
+        cur_month = extracted_date.month
         
         
         soup = BeautifulSoup(raw_cal,'lxml') # Parse the HTML as a string
@@ -90,12 +99,18 @@ for file in glob.glob("*2018-05-20.json"):
         for month_tb in soup_tables:
      
             cells = month_tb.findAll("td")
+
+            # Missing the first table??
+
+            #print("Extracting data for date:" + cur_month)
             
             for td in cells:
                 try:
                     day_val = int(td.text)
 
                     date_full = datetime.date(cur_year,cur_month,day_val)
+
+                    #print("Full date: " + date_full.strftime("%Y-%m-%d"))
 
                     m1 = None
                     m2 = None
@@ -107,7 +122,10 @@ for file in glob.glob("*2018-05-20.json"):
                     # for consecutive bookings?
 
                     # If its an unavailable date then mark: 
+                    # Unavailable means this is the middle of a booking.
                     m1 = re.search('c-calendar--unavailable', str(td))
+
+                    # Want to include all the bookings for the month, since can only see the actuall bookings on the last day of month!
 
                     if m1 is not None:
                         all_months[str(date_full)] = 'UVL' # Unavailable day
@@ -143,6 +161,8 @@ for file in glob.glob("*2018-05-20.json"):
         cal_details['property_id'] = row['property_id']
         cal_details['calendar'] = all_months
         cal_details['ext_at'] = str(row['ext_at'])
+
+        print("Found details:" + str(cal_details))
         
         if first_page is True:
             fp.write('[\n')

@@ -1,9 +1,8 @@
 import pandas as pd
-import datetime
-import datetime
 import re
 import lxml
 from bs4 import BeautifulSoup
+from datetime import datetime
 import json
 from calendar import monthrange
 import numpy as np
@@ -17,7 +16,8 @@ import glob, os
 os.chdir("/Users/taj/GitHub/scraping/stayz/WebData/nsw_processed_calendar")
 
 #for file in glob.glob("*.json"):
-for file in glob.glob("*2018-05-20.json"):
+
+for file in glob.glob("*_9168471.json_proc.json"):
 
 
     print("Filename: " + file)
@@ -72,7 +72,8 @@ for file in glob.glob("*2018-05-20.json"):
                 date_arr = date
 
                 # Reset the count for this booking
-                booking_days = 0
+                # Has to be at least one nights stay!
+                booking_days = 1
 
                 # Move to the next day.
                 # Breaks if they arrive on the last day of the 6th month!!!
@@ -92,7 +93,7 @@ for file in glob.glob("*2018-05-20.json"):
                     status = c[date]
 
                     # Departure date doesnt count as a booked date, but as an available date
-                    booking_days += 1
+                    #booking_days += 1
 
                     days_count += 1
 
@@ -103,6 +104,8 @@ for file in glob.glob("*2018-05-20.json"):
                 avl_count += 1
                 days_count += 1
 
+
+
                 # Get the departure day details??
                 
                 if(min_dateIndex >= max_dateIndex): 
@@ -112,8 +115,15 @@ for file in glob.glob("*2018-05-20.json"):
                 else:
                     date_dep = date
 
+
+                # Calculate the days based on the dates
+
+                #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
+
+                booking_days = datetime.strptime(date_dep,'%Y-%M-%d') - datetime.strptime(date_arr,'%Y-%M-%d')
+
                 # Track the total bookings.
-                booking_count += booking_days
+                #booking_count += booking_days
 
                 # Keep the date the calendar was extracted
                 ext_at = str(row['ext_at'])
@@ -124,7 +134,7 @@ for file in glob.glob("*2018-05-20.json"):
                     'ext_at' : ext_at,
                     'arr_dt': date_arr,
                     'dep_dt': date_dep,
-                    'book_days': booking_days
+                    'book_days': str(booking_days.days)
                 }
 
                 if first_page is True:
