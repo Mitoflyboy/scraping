@@ -27,6 +27,10 @@ FROM
 --;
 
 
+select * from stayzdb.stayz_bookings_load 
+where property_id = 9062114
+group by 1,2,3,4,5
+
 
 
 -- Get the original all data rows
@@ -58,7 +62,7 @@ order by arr_dt asc
 
 -- Check a property
 select * from stayzdb.stayz_bookings_concat
-where property_id = 9168471
+where property_id = 9062114
 order by arr_dt asc, ext_at desc
 ;
 
@@ -74,7 +78,142 @@ Where
 
 -- Gives the date as 2018-05-28
 -- Now get all bookings with that extract date:
+Select
+	*
+From
+	stayzdb.stayz_bookings_load
+Where
+	property_id = 9168471
+	and ext_at = '2018-05-28'
+Order by arr_dt asc
+;
 
+-- For each property_id/month, get the maximum ext_at date
+
+
+-- Get the unique ext_at months
+
+
+
+
+truncate stayzdb.stayz_extract_dates
+;
+
+
+Insert into stayzdb.stayz_extract_dates
+Select
+	property_id
+	,EXTRACT(MONTH from ext_at) as mth
+	,max(ext_at)
+From
+	stayzdb.stayz_bookings_load
+--Where
+--	property_id = 9168471
+Group by 1,2
+;
+
+select * from stayzdb.stayz_extract_dates
+limit 10
+
+
+-- Join it back to the loaded data to get the last records, then sum days by month
+
+
+Select
+	A.property_id
+	--,sum(A.book_days)
+	,A.*
+From
+	stayzdb.stayz_bookings_load A
+	Inner Join stayzdb.stayz_extract_dates B
+	On A.property_id = B.property_id
+	And A.ext_at = B.ext_at
+	And EXTRACT(MONTH from A.arr_dt) = B.mth
+Where
+	A.property_id = 9168471
+
+
+
+create or replace function last_day(date) returns date as 
+'select cast(date_trunc(''month'', $1) + ''1 month''::interval as date) - 1'
+language sql;
+
+-- Split up the bookings which run over the end of the month into two
+
+TRUNCATE stayzdb.stayz_bookins_month_split
+;
+
+INSERT INTO stayzdb.stayz_bookins_month_split
+Select
+	A.property_id
+	--,sum(A.book_days)
+	,A.ext_at
+	,A.arr_dt
+	,A.dep_dt
+	,A.book_days
+	,(CASE WHEN EXTRACT(MONTH from A.dep_dt) > B.mth THEN 'C' ELSE 'O' END) as calc_status
+	,(CASE WHEN EXTRACT(MONTH from A.dep_dt) > B.mth THEN date_part('day',age(last_day(A.arr_dt), A.arr_dt))+1
+	 ELSE A.book_days
+	 END) as book_days_split
+	,B.mth as month_code
+From
+	stayzdb.stayz_bookings_load A
+	Inner Join stayzdb.stayz_extract_dates B
+	On A.property_id = B.property_id
+	And A.ext_at = B.ext_at
+	And EXTRACT(MONTH from A.arr_dt) = B.mth
+--Where
+--	A.property_id = 9168471
+
+UNION ALL
+-- The second month generate the rows for overlapping
+
+Select
+	A.*
+From
+	(
+		Select
+			A.property_id
+			--,sum(A.book_days)
+			,A.ext_at
+			,A.arr_dt
+			,A.dep_dt
+			,A.book_days
+			,(CASE WHEN EXTRACT(MONTH from A.dep_dt) > B.mth THEN 'C' ELSE 'O' END) as calc_status
+			,(CASE WHEN EXTRACT(MONTH from A.dep_dt) > B.mth THEN date_part('day',age(A.dep_dt, cast(date_trunc('month', A.dep_dt) as date)))
+			 ELSE A.book_days
+			 END) as book_days_split
+			,EXTRACT(MONTH from A.dep_dt) as month_code
+		From
+			stayzdb.stayz_bookings_load A
+			Inner Join stayzdb.stayz_extract_dates B
+			On A.property_id = B.property_id
+			And A.ext_at = B.ext_at
+			And EXTRACT(MONTH from A.arr_dt) = B.mth
+		--Where
+		--	A.property_id = 9168471
+	) A
+
+Where
+	A.calc_status = 'C'
+;
+
+
+
+-- Now sum up the dates by month code:
+Select
+	property_id
+	,month_code
+	,sum(book_days_split)
+From
+	stayzdb.stayz_bookins_month_split
+Where
+	property_id in(9148674, 9169308, 9062114, 9137336, 9168471)
+Group By 1,2
+Order by 1,2 asc
+;
+
+-- If the arrival and departure dates are split over the end of month, then need to appropriately split the day count too!!
 
 -- Identify duplicates and take the latest values
 Select

@@ -52,8 +52,8 @@ os.chdir("/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar")
 
 #for file in glob.glob("*2018-05-20.json"):
 
-#for file in glob.glob("*.json.zip"):
-for file in glob.glob("stayz_calendar_9168471.json"):
+for file in glob.glob("*.json.zip"):
+#for file in glob.glob("stayz_calendar_9168471.json"):
 
 
     print("Filename: " + file)
@@ -84,7 +84,7 @@ for file in glob.glob("stayz_calendar_9168471.json"):
 
         extracted_date = row['ext_at']
 
-        print("Extracted Date: " + extracted_date.strftime("%Y-%m-%d") )
+        #print("Extracted Date: " + extracted_date.strftime("%Y-%m-%d") )
 
         cur_year = extracted_date.year
         cur_month = extracted_date.month
@@ -162,7 +162,7 @@ for file in glob.glob("stayz_calendar_9168471.json"):
         cal_details['calendar'] = all_months
         cal_details['ext_at'] = str(row['ext_at'])
 
-        print("Found details:" + str(cal_details))
+        #print("Found details:" + str(cal_details))
         
         if first_page is True:
             fp.write('[\n')

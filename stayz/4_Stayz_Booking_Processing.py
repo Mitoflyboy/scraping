@@ -15,9 +15,9 @@ import glob, os
 
 os.chdir("/Users/taj/GitHub/scraping/stayz/WebData/nsw_processed_calendar")
 
-#for file in glob.glob("*.json"):
+for file in glob.glob("*.json"):
 
-for file in glob.glob("*_9168471.json_proc.json"):
+#for file in glob.glob("*_9168471.json_proc.json"):
 
 
     print("Filename: " + file)
@@ -112,15 +112,25 @@ for file in glob.glob("*_9168471.json_proc.json"):
                     # Booking runs over the end of the month into the 7th month, which we dont track
                     # Ignore this booking or just track to the end of the month?
                     date_dep = None
+
+                    booking_days = 0
                 else:
                     date_dep = date
+
+                    b_days = datetime.strptime(date_dep,'%Y-%m-%d') - datetime.strptime(date_arr,'%Y-%m-%d')
+
+                    # If the booking runs over the month, then create two entries. One for the first month, the second for next month??
+
+                    booking_days = b_days.days
+
+
 
 
                 # Calculate the days based on the dates
 
                 #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
 
-                booking_days = datetime.strptime(date_dep,'%Y-%M-%d') - datetime.strptime(date_arr,'%Y-%M-%d')
+                
 
                 # Track the total bookings.
                 #booking_count += booking_days
@@ -134,7 +144,7 @@ for file in glob.glob("*_9168471.json_proc.json"):
                     'ext_at' : ext_at,
                     'arr_dt': date_arr,
                     'dep_dt': date_dep,
-                    'book_days': str(booking_days.days)
+                    'book_days': str(booking_days)
                 }
 
                 if first_page is True:
