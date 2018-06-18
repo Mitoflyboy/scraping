@@ -73,7 +73,7 @@ class StayzSpider(scrapy.Spider):
     name = 'stayz_crawler'
     
     # Full scrape - NSW
-    start_urls = ['https://www.stayz.com.au/accommodation/nsw']
+    #start_urls = ['https://www.stayz.com.au/accommodation/nsw']
 
     #start_urls = ['https://www.stayz.com.au/accommodation/nsw/hunter/newcastle/9185654']
     
@@ -81,7 +81,7 @@ class StayzSpider(scrapy.Spider):
     #start_urls = ['https://www.stayz.com.au/accommodation/nsw/explorer-country/forbes']
     
     # Orange - has 122 properties on 3 listing pages
-    #start_urls = ['https://www.stayz.com.au/accommodation/nsw/explorer-country/orange/']
+    start_urls = ['https://www.stayz.com.au/accommodation/nsw/explorer-country/orange/']
     
     #start_urls = ['https://www.stayz.com.au/accommodation/nsw/explorer-country/mudgee'
     #             ,'https://www.stayz.com.au/accommodation/nsw/explorer-country/bathurst'

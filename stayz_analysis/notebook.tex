@@ -141,7 +141,7 @@
     \def\gt{>}
     \def\lt{<}
     % Document parameters
-    \title{Stayz\_Bookings\_Prediction}
+    \title{Stayz\_Analysis}
     
     
     
@@ -280,331 +280,1530 @@
     
 
     
-    \section{Rental Accomodation Booking
-Predictor}\label{rental-accomodation-booking-predictor}
+    \section{TO DO List}\label{to-do-list}
 
-For the last 3 months I have been running some web scraping jobs to
-extract the publicly available data for short term holiday rentals in
-NSW from an AirBnB type of website. Extracting the property details as
-well as the public calendar allows us to get both the property features
-as well as see the current state of bookings, specifically which dates
-are currently booked and for how long.
-
-The image below shows the location of all the properties, with Sydney
-shown as the red dot:
-
-\begin{figure}
-\centering
-\includegraphics{Airbnb_Property_Locations_NSW.PNG}
-\caption{Property Locations}
-\end{figure}
-
-Features that we are able to extract include: * Number of bedrooms *
-Number of guests allowed * Price per night * Overall rating and the
-number of reviews given * Distance and direction from Sydney * Number of
-photos of the property on the listing * Word count of the main
-description * The type of property (cottage, apartment, farmstay, house
-etc) * Other features extracted from the listing begin with 'f\_' such
-as \texttt{f\_clothes\_dryer} * Calendar showing current forward
-bookings
-
-The calendar information shows arrival and departure dates as part of
-the html code, which can be parsed with Python and then collated to
-provide the number of days booked. Future improvements will include
-breaking this down into the number of weekends, public holidays, and
-school holiday bookings.
-
-\begin{figure}
-\centering
-\includegraphics{Airbnb_Calendar.PNG}
-\caption{Calendar}
-\end{figure}
-
-From manual inspection there are a small number of property listings who
-get high bookings, with a large number of property listings having very
-few or zero bookings.
-
-The hypothesis is that there is an identifiable feature list which is
-desirable for bookings, and therefore that bookings can be predicted
-accurately for a new property when given the full set of features of
-that property.
-
-Based on the tutorial at
-https://mitrai.com/tech-guide/using-aws-sagemaker-linear-regression-to-predict-store-transactions/
-
-    \subsection{1. Import Libraries}\label{import-libraries}
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Get the 'Average customer ratings' for comfort, cleanliness, location,
+  quality
+\item
+  Do a scatter plot of distance from sydney vs bookings count???
+\item
+  Distance vs revenue?
+\item
+  Distance vs revenue per person (assuming full occupancy)
+\item
+  Percentage occupancy for the month vs distance
+\item
+  30/60/90 day occupancy vs distance (forward bookings)
+\item
+  Last 30/60/90 day actual occupance vs distance (history bookings)
+\item
+  Count how many places have zero bookings
+\end{enumerate}
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{k+kn}{import} \PY{n+nn}{pandas} \PY{k}{as} \PY{n+nn}{pd}
-        \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
-        \PY{k+kn}{import} \PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot} \PY{k}{as} \PY{n+nn}{plt}
-        \PY{k+kn}{import} \PY{n+nn}{io}
+{\color{incolor}In [{\color{incolor}1}]:} \PY{k+kn}{import} \PY{n+nn}{sysconfig}
         \PY{k+kn}{import} \PY{n+nn}{os}
-        \PY{k+kn}{import} \PY{n+nn}{time}
+        \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
+        \PY{k+kn}{import} \PY{n+nn}{pandas} \PY{k}{as} \PY{n+nn}{pd}
         \PY{k+kn}{import} \PY{n+nn}{json}
-        \PY{k+kn}{import} \PY{n+nn}{boto3}
+        \PY{k+kn}{import} \PY{n+nn}{distutils}
+        \PY{k+kn}{import} \PY{n+nn}{datetime}
+        \PY{k+kn}{import} \PY{n+nn}{scrapy}
+        \PY{k+kn}{import} \PY{n+nn}{requests}
+        \PY{k+kn}{import} \PY{n+nn}{json}
+        \PY{k+kn}{import} \PY{n+nn}{logging}
+        \PY{k+kn}{import} \PY{n+nn}{string}
         \PY{k+kn}{import} \PY{n+nn}{re}
+        \PY{k+kn}{import} \PY{n+nn}{seaborn} \PY{k}{as} \PY{n+nn}{sns}
+        \PY{k+kn}{import} \PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot} \PY{k}{as} \PY{n+nn}{plt}
         
-        \PY{k+kn}{from} \PY{n+nn}{sklearn}\PY{n+nn}{.}\PY{n+nn}{model\PYZus{}selection} \PY{k}{import} \PY{n}{train\PYZus{}test\PYZus{}split}
+        \PY{k+kn}{from} \PY{n+nn}{sklearn} \PY{k}{import} \PY{n}{model\PYZus{}selection}
+        \PY{k+kn}{from} \PY{n+nn}{sklearn}\PY{n+nn}{.}\PY{n+nn}{model\PYZus{}selection} \PY{k}{import} \PY{n}{cross\PYZus{}val\PYZus{}score}
+        \PY{k+kn}{from} \PY{n+nn}{sklearn}\PY{n+nn}{.}\PY{n+nn}{tree} \PY{k}{import} \PY{n}{DecisionTreeClassifier}
         
-        \PY{k+kn}{import} \PY{n+nn}{sagemaker}
-        \PY{k+kn}{import} \PY{n+nn}{sagemaker}\PY{n+nn}{.}\PY{n+nn}{amazon}\PY{n+nn}{.}\PY{n+nn}{common} \PY{k}{as} \PY{n+nn}{smac}
-        \PY{k+kn}{from} \PY{n+nn}{sagemaker}\PY{n+nn}{.}\PY{n+nn}{predictor} \PY{k}{import} \PY{n}{csv\PYZus{}serializer}\PY{p}{,} \PY{n}{json\PYZus{}deserializer}
-        \PY{k+kn}{from} \PY{n+nn}{sagemaker} \PY{k}{import} \PY{n}{get\PYZus{}execution\PYZus{}role}
+        \PY{o}{\PYZpc{}}\PY{k}{matplotlib} inline
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{n}{bucket} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{deloitte\PYZhy{}sagemaker}\PY{l+s+s1}{\PYZsq{}}
-        \PY{n}{prefix} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{sagemaker/linear\PYZus{}time\PYZus{}series\PYZus{}forecast}\PY{l+s+s1}{\PYZsq{}}
+{\color{incolor}In [{\color{incolor}2}]:} \PY{c+c1}{\PYZsh{}date\PYZus{}str = datetime.datetime.now().strftime(\PYZdq{}\PYZpc{}Y\PYZhy{}\PYZpc{}m\PYZhy{}\PYZpc{}d\PYZdq{})}
         
-        \PY{c+c1}{\PYZsh{} Define IAM role}
-        \PY{c+c1}{\PYZsh{}role = get\PYZus{}execution\PYZus{}role()}
-        \PY{c+c1}{\PYZsh{}role}
-\end{Verbatim}
-
-
-    \subsection{2. Data Import and
-Validation}\label{data-import-and-validation}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{n}{hd\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}csv}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{housing\PYZus{}sample.csv}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        \PY{n}{date\PYZus{}str} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{2018\PYZhy{}05\PYZhy{}31}\PY{l+s+s1}{\PYZsq{}}
         
-        \PY{c+c1}{\PYZsh{} Fill any \PYZsq{}NaN\PYZsq{} values with zero}
-        \PY{n}{hd\PYZus{}1}\PY{o}{.}\PY{n}{fillna}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{inplace}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
-        
-        \PY{c+c1}{\PYZsh{} Drop the \PYZsq{}ext\PYZus{}at\PYZsq{} column}
-        \PY{n}{hd\PYZus{}1}\PY{o}{.}\PY{n}{drop}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ext\PYZus{}at}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{inplace}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
-        
-        \PY{c+c1}{\PYZsh{} Exclude any rows there the \PYZsq{}init\PYZus{}price\PYZsq{} is unknown.}
-        \PY{n}{hd\PYZus{}2} \PY{o}{=} \PY{n}{hd\PYZus{}1}\PY{p}{[}\PY{n}{hd\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}} \PY{l+m+mi}{0} \PY{p}{]}
-        
-        \PY{c+c1}{\PYZsh{} Drop the \PYZsq{}property\PYZus{}id\PYZsq{} column}
-        \PY{n}{hd\PYZus{}3} \PY{o}{=} \PY{n}{hd\PYZus{}2}\PY{o}{.}\PY{n}{drop}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}
-        
-        \PY{n}{h\PYZus{}data} \PY{o}{=} \PY{n}{hd\PYZus{}3}
-        
-        
-        \PY{n}{display}\PY{p}{(}\PY{n}{h\PYZus{}data}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}\PY{p}{)}
+        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Date: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n}{date\PYZus{}str}\PY{p}{)}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Check for any missing postcodes}
-        \PY{n}{mp} \PY{o}{=} \PY{n}{h\PYZus{}data}\PY{p}{[}\PY{n}{h\PYZus{}data}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{postcode}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{isnull}\PY{p}{(}\PY{p}{)}\PY{p}{]}
-        \PY{n}{mp}\PY{o}{.}\PY{n}{postcode}
+Date: 2018-05-31
+
+    \end{Verbatim}
+
+    \subsection{Dataset 1 - nsw\_extract}\label{dataset-1---nsw_extract}
+
+Load the nsw\_extract daily file. This starts with the
+https://www.stayz.com.au/accommodation/nsw page and then follows the
+link to each propert. This is the quick (30 minutes) extract of raw
+details, as it excludes the calendar details.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}3}]:} \PY{c+c1}{\PYZsh{} Read the data file and display}
+        \PY{n}{nsw\PYZus{}extract\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}json}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}extract/stayz\PYZus{}nsw\PYZus{}extract\PYZus{}}\PY{l+s+s1}{\PYZsq{}} \PY{o}{+} \PY{n}{date\PYZus{}str} \PY{o}{+} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{.json}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{c+c1}{\PYZsh{} Reindex for \PYZsq{}property\PYZus{}id\PYZsq{}}
+        \PY{n}{nsw\PYZus{}extract\PYZus{}2} \PY{o}{=} \PY{n}{nsw\PYZus{}extract\PYZus{}1}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{n}{nsw\PYZus{}extract\PYZus{}3} \PY{o}{=} \PY{n}{nsw\PYZus{}extract\PYZus{}2}\PY{o}{.}\PY{n}{sort\PYZus{}index}\PY{p}{(}\PY{p}{)}
+        
+        \PY{n}{nsw\PYZus{}extract} \PY{o}{=} \PY{n}{nsw\PYZus{}extract\PYZus{}3}
+        
+        
+        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{nsw\PYZus{}extract index: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n}{nsw\PYZus{}extract}\PY{o}{.}\PY{n}{index}\PY{o}{.}\PY{n}{dtype\PYZus{}str}\PY{p}{)}\PY{p}{)}
+        
+        \PY{n}{nsw\PYZus{}extract}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Make sure that all fields are non null}
-        \PY{n}{h\PYZus{}data}\PY{o}{.}\PY{n}{info}\PY{p}{(}\PY{p}{)}
+nsw\_extract index: int64
+
+    \end{Verbatim}
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}3}]:}              bathrooms  bedrooms  beds  \textbackslash{}
+        property\_id                              
+        1873                 3         6     8   
+        2564                 3         4     5   
+        3333                 1         1     3   
+        4121                 2         2     3   
+        4219                 1         1     2   
+        
+                                                      description\_full  \textbackslash{}
+        property\_id                                                      
+        1873         [Large home with 6 bedrooms 1 with ensuite, 2 {\ldots}   
+        2564         [PLEASE NOTE CHANGES TO ALL NEW BOOKINGS - 7 S{\ldots}   
+        3333         [Lakeview Plaza Motel standard rooms are great{\ldots}   
+        4121         [This property is a holiday rental, it is not {\ldots}   
+        4219         [Well maintained and comfortable 3½ star motel{\ldots}   
+        
+                     description\_wc  guests                                  heading  \textbackslash{}
+        property\_id                                                                    
+        1873                    135      13         Mana magic - 182 Elizabeth Drive   
+        2564                    352       8                    Long Reef Beach House   
+        3333                    194       4            Lakeview Plaza Motel standard   
+        4121                    411       6  Seashells - relax in comfort with views   
+        4219                    161       2      Forest Lodge Motor Inn \& Restaurant   
+        
+                     init\_price        lat        lng property\_type  reviews  \textbackslash{}
+        property\_id                                                            
+        1873                561 -35.066400  150.67400       Cottage       29   
+        2564                694 -35.013200  150.82500         House       27   
+        3333                250 -36.415800  148.62100         Motel        5   
+        4121                165 -34.919876  150.76453         House       23   
+        4219                122 -32.242450  148.63153         Motel        2   
+        
+                            scraped\_date syd\_brg  syd\_brg\_deg  syd\_dist\_km  \textbackslash{}
+        property\_id                                                          
+        1873         2018-05-31 01:06:07       S          201          128   
+        2564         2018-05-31 01:15:11       S          195          118   
+        3333         2018-05-31 01:03:56      SW          220          356   
+        4121         2018-05-31 01:18:20       S          200          110   
+        4219         2018-05-31 01:05:31      NW          308          306   
+        
+                                                                   url  
+        property\_id                                                     
+        1873         https://www.stayz.com.au//accommodation/nsw/so{\ldots}  
+        2564         https://www.stayz.com.au//accommodation/nsw/so{\ldots}  
+        3333         https://www.stayz.com.au//accommodation/nsw/sn{\ldots}  
+        4121         https://www.stayz.com.au//accommodation/nsw/so{\ldots}  
+        4219         https://www.stayz.com.au//accommodation/nsw/ex{\ldots}  
 \end{Verbatim}
+            
+    \subsection{Dataset 2 - Geocode
+Addresses}\label{dataset-2---geocode-addresses}
 
-
-    \subsection{3. Training and Test Data
-Sets}\label{training-and-test-data-sets}
-
-We will use the \texttt{total\_booked\_days} column as being the y-value
-we want to predict, then create training and test data sets using an
-80/20 split.
+Load the full geocoded address file. This is the Google reverse geocoder
+API output for each of the latitude/longitude details for each property.
+Note that the street number is not exact for the property but is within
+a few houses and is the same street. Stayz deliberatly obfuscates the
+exact location however all other details are correct apart from house
+number.
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Define which column is the y variable}
-        \PY{n}{y} \PY{o}{=} \PY{n}{h\PYZus{}data}\PY{o}{.}\PY{n}{total\PYZus{}booked\PYZus{}days}
+{\color{incolor}In [{\color{incolor}4}]:} \PY{c+c1}{\PYZsh{} Read the data file and display}
+        \PY{n}{geodata\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}json}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}geocoded/stayz\PYZus{}geocoded\PYZus{}full.json}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
         
-        \PY{c+c1}{\PYZsh{} Split into a training set and a testing set}
-        \PY{n}{X\PYZus{}train}\PY{p}{,} \PY{n}{X\PYZus{}test}\PY{p}{,} \PY{n}{y\PYZus{}train}\PY{p}{,} \PY{n}{y\PYZus{}test} \PY{o}{=} \PY{n}{train\PYZus{}test\PYZus{}split}\PY{p}{(}\PY{n}{h\PYZus{}data}\PY{p}{,} \PY{n}{y}\PY{p}{,} \PY{n}{test\PYZus{}size}\PY{o}{=}\PY{l+m+mf}{0.20}\PY{p}{,} \PY{n}{random\PYZus{}state}\PY{o}{=}\PY{l+m+mi}{42}\PY{p}{)}
+        \PY{n}{geodata\PYZus{}2} \PY{o}{=} \PY{n}{geodata\PYZus{}1}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        \PY{n}{geodata\PYZus{}3} \PY{o}{=} \PY{n}{geodata\PYZus{}2}\PY{o}{.}\PY{n}{sort\PYZus{}index}\PY{p}{(}\PY{p}{)}
         
-        \PY{n}{X\PYZus{}train}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
-\end{Verbatim}
-
-
-    \subsection{4. Convert Data and Upload to
-S3}\label{convert-data-and-upload-to-s3}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Convert training dataset to RecordIO format as required by Amazon Sagemaker}
+        \PY{n}{geodata} \PY{o}{=} \PY{n}{geodata\PYZus{}3}
         
-        \PY{n}{buf} \PY{o}{=} \PY{n}{io}\PY{o}{.}\PY{n}{BytesIO}\PY{p}{(}\PY{p}{)}
-        \PY{n}{smac}\PY{o}{.}\PY{n}{write\PYZus{}numpy\PYZus{}to\PYZus{}dense\PYZus{}tensor}\PY{p}{(}\PY{n}{buf}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{X\PYZus{}train}\PY{p}{)}\PY{o}{.}\PY{n}{astype}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{float32}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{y\PYZus{}train}\PY{p}{)}\PY{o}{.}\PY{n}{astype}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{float32}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{)}
-        \PY{n}{buf}\PY{o}{.}\PY{n}{seek}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Upload training data to S3}
         
-        \PY{n}{key} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{housing\PYZus{}data.data}\PY{l+s+s1}{\PYZsq{}}
-        \PY{n}{boto3}\PY{o}{.}\PY{n}{resource}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{s3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{Bucket}\PY{p}{(}\PY{n}{bucket}\PY{p}{)}\PY{o}{.}\PY{n}{Object}\PY{p}{(}\PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{n}{prefix}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{train}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{key}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{upload\PYZus{}fileobj}\PY{p}{(}\PY{n}{buf}\PY{p}{)}
-        \PY{n}{s3\PYZus{}train\PYZus{}data} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{s3://}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{/}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{/train/}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{bucket}\PY{p}{,} \PY{n}{prefix}\PY{p}{,} \PY{n}{key}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Uploaded training data location: }\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{s3\PYZus{}train\PYZus{}data}\PY{p}{)}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Convert validation dataset to RecordIO format as required by Amazon Sagemaker}
+        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{geodata index: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n}{geodata}\PY{o}{.}\PY{n}{index}\PY{o}{.}\PY{n}{dtype\PYZus{}str}\PY{p}{)}\PY{p}{)}
         
-        \PY{n}{buf} \PY{o}{=} \PY{n}{io}\PY{o}{.}\PY{n}{BytesIO}\PY{p}{(}\PY{p}{)}
-        \PY{n}{smac}\PY{o}{.}\PY{n}{write\PYZus{}numpy\PYZus{}to\PYZus{}dense\PYZus{}tensor}\PY{p}{(}\PY{n}{buf}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{X\PYZus{}test}\PY{p}{)}\PY{o}{.}\PY{n}{astype}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{float32}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{y\PYZus{}test}\PY{p}{)}\PY{o}{.}\PY{n}{astype}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{float32}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{)}
-        \PY{n}{buf}\PY{o}{.}\PY{n}{seek}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Upload validation data to S3}
-        
-        \PY{n}{key} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{housing\PYZus{}validation.data}\PY{l+s+s1}{\PYZsq{}}
-        \PY{n}{boto3}\PY{o}{.}\PY{n}{resource}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{s3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{Bucket}\PY{p}{(}\PY{n}{bucket}\PY{p}{)}\PY{o}{.}\PY{n}{Object}\PY{p}{(}\PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{n}{prefix}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{validation}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{key}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{upload\PYZus{}fileobj}\PY{p}{(}\PY{n}{buf}\PY{p}{)}
-        \PY{n}{s3\PYZus{}validation\PYZus{}data} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{s3://}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{/}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{/validation/}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{bucket}\PY{p}{,} \PY{n}{prefix}\PY{p}{,} \PY{n}{key}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Uploaded validation data location: }\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{s3\PYZus{}validation\PYZus{}data}\PY{p}{)}\PY{p}{)}
-\end{Verbatim}
-
-
-    \subsubsection{5. Run LinearLearner
-Predictor}\label{run-linearlearner-predictor}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Specify the containers}
-        
-        \PY{n}{containers} \PY{o}{=} \PY{p}{\PYZob{}}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{us\PYZhy{}west\PYZhy{}2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{174872318107.dkr.ecr.us\PYZhy{}west\PYZhy{}2.amazonaws.com/linear\PYZhy{}learner:latest}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
-                     \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{us\PYZhy{}east\PYZhy{}1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{382416733822.dkr.ecr.us\PYZhy{}east\PYZhy{}1.amazonaws.com/linear\PYZhy{}learner:latest}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
-                     \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{us\PYZhy{}east\PYZhy{}2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{404615174143.dkr.ecr.us\PYZhy{}east\PYZhy{}2.amazonaws.com/linear\PYZhy{}learner:latest}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
-                     \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{eu\PYZhy{}west\PYZhy{}1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{438346466558.dkr.ecr.eu\PYZhy{}west\PYZhy{}1.amazonaws.com/linear\PYZhy{}learner:latest}\PY{l+s+s1}{\PYZsq{}}\PY{p}{\PYZcb{}}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Start a Sagemaker session}
-        
-        \PY{n}{sess} \PY{o}{=} \PY{n}{sagemaker}\PY{o}{.}\PY{n}{Session}\PY{p}{(}\PY{p}{)}
-        
-        \PY{n}{linear} \PY{o}{=} \PY{n}{sagemaker}\PY{o}{.}\PY{n}{estimator}\PY{o}{.}\PY{n}{Estimator}\PY{p}{(}\PY{n}{containers}\PY{p}{[}\PY{n}{boto3}\PY{o}{.}\PY{n}{Session}\PY{p}{(}\PY{p}{)}\PY{o}{.}\PY{n}{region\PYZus{}name}\PY{p}{]}
-                                               \PY{p}{,}\PY{n}{role}
-                                               \PY{p}{,}\PY{n}{train\PYZus{}instance\PYZus{}count}\PY{o}{=}\PY{l+m+mi}{1}
-                                               \PY{p}{,}\PY{n}{train\PYZus{}instance\PYZus{}type}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ml.m5.large}\PY{l+s+s1}{\PYZsq{}}
-                                               \PY{p}{,}\PY{n}{output\PYZus{}path}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{s3://}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{/}\PY{l+s+si}{\PYZob{}\PYZcb{}}\PY{l+s+s1}{/output}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{bucket}\PY{p}{,} \PY{n}{prefix}\PY{p}{)}
-                                               \PY{p}{,}\PY{n}{sagemaker\PYZus{}session}\PY{o}{=}\PY{n}{sess}\PY{p}{)}
-        
-        \PY{n}{linear}\PY{o}{.}\PY{n}{set\PYZus{}hyperparameters}\PY{p}{(}\PY{n}{feature\PYZus{}dim}\PY{o}{=}\PY{l+m+mi}{77}
-                                   \PY{p}{,}\PY{n}{mini\PYZus{}batch\PYZus{}size}\PY{o}{=}\PY{l+m+mi}{100}
-                                   \PY{p}{,}\PY{n}{predictor\PYZus{}type}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{regressor}\PY{l+s+s1}{\PYZsq{}}
-                                   \PY{p}{,}\PY{n}{epochs}\PY{o}{=}\PY{l+m+mi}{10}
-                                   \PY{p}{,}\PY{n}{num\PYZus{}models}\PY{o}{=}\PY{l+m+mi}{32}
-                                   \PY{p}{,}\PY{n}{loss}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{absolute\PYZus{}loss}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        
-        \PY{n}{linear}\PY{o}{.}\PY{n}{fit}\PY{p}{(}\PY{p}{\PYZob{}}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{train}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{n}{s3\PYZus{}train\PYZus{}data}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{validation}\PY{l+s+s1}{\PYZsq{}}\PY{p}{:} \PY{n}{s3\PYZus{}validation\PYZus{}data}\PY{p}{\PYZcb{}}\PY{p}{)}
+        \PY{n}{geodata}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{l+m+mi}{10}\PY{p}{)}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{n}{linear\PYZus{}predictor} \PY{o}{=} \PY{n}{linear}\PY{o}{.}\PY{n}{deploy}\PY{p}{(}\PY{n}{initial\PYZus{}instance\PYZus{}count}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{instance\PYZus{}type}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ml.m4.xlarge}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+geodata index: int64
+
+    \end{Verbatim}
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}4}]:}                     council  \textbackslash{}
+        property\_id                   
+        52                  Gosford   
+        717               Pittwater   
+        806             Great Lakes   
+        1036                Gosford   
+        1266             Shoalhaven   
+        1873             Shoalhaven   
+        1971            Great Lakes   
+        1971            Great Lakes   
+        2040             Shoalhaven   
+        2042         Blue Mountains   
+        
+                                                     formatted\_address postcode  \textbackslash{}
+        property\_id                                                               
+        52                24 Avoca Dr, Avoca Beach NSW 2251, Australia     2251   
+        717          342 Whale Beach Rd, Palm Beach NSW 2108, Austr{\ldots}     2108   
+        806           5 Coast Ave, Boomerang Beach NSW 2428, Australia     2428   
+        1036             15 Ficus Ave, Avoca Beach NSW 2251, Australia     2251   
+        1266            42 Elizabeth Dr, Vincentia NSW 2540, Australia     2540   
+        1873           182 Elizabeth Dr, Vincentia NSW 2540, Australia     2540   
+        1971           30 Ski Cove St, Smiths Lake NSW 2428, Australia     2428   
+        1971           30 Ski Cove St, Smiths Lake NSW 2428, Australia     2428   
+        2040         6 Bellbird Cl, Mollymook Beach NSW 2539, Austr{\ldots}     2539   
+        2042         119 Evans Lookout Rd, Blackheath NSW 2785, Aus{\ldots}     2785   
+        
+                              st\_name st\_nbr state           suburb  
+        property\_id                                                  
+        52                   Avoca Dr     24   NSW      Avoca Beach  
+        717            Whale Beach Rd    342   NSW       Palm Beach  
+        806                 Coast Ave      5   NSW  Boomerang Beach  
+        1036                Ficus Ave     15   NSW      Avoca Beach  
+        1266             Elizabeth Dr     42   NSW        Vincentia  
+        1873             Elizabeth Dr    182   NSW        Vincentia  
+        1971              Ski Cove St     30   NSW      Smiths Lake  
+        1971              Ski Cove St     30   NSW      Smiths Lake  
+        2040              Bellbird Cl      6   NSW  Mollymook Beach  
+        2042         Evans Lookout Rd    119   NSW       Blackheath  
+\end{Verbatim}
+            
+    \subsection{Dataset 3 - Bookings data}\label{dataset-3---bookings-data}
+
+This is extracted from the raw data in the nsw\_calendar extracts, and
+each booking details are calculated including arrival date, and number
+of nights booked. We can aggregate this for each property.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}5}]:} \PY{c+c1}{\PYZsh{} Read the bookings file}
+        \PY{n}{bk\PYZus{}date\PYZus{}str} \PY{o}{=} \PY{n}{date\PYZus{}str}
+        
+        \PY{c+c1}{\PYZsh{}book\PYZus{}1 = pd.read\PYZus{}json(\PYZsq{}/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}bookings/stayz\PYZus{}bookings\PYZus{}\PYZsq{} + bk\PYZus{}date\PYZus{}str + \PYZsq{}.json\PYZsq{},convert\PYZus{}dates=[\PYZsq{}arr\PYZus{}dt\PYZsq{},\PYZsq{}dep\PYZus{}dt\PYZsq{}])}
+        \PY{c+c1}{\PYZsh{} Read the CSV file generated from Postgres. This has the corrected date splits over the month}
+        \PY{c+c1}{\PYZsh{} It ignores bookings more than 7 days in length}
+        \PY{c+c1}{\PYZsh{} It also has all the months from Feb 2018 until May 2018}
+        \PY{n}{book\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}csv}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz\PYZus{}analysis/orange\PYZus{}large\PYZus{}month\PYZus{}summary.csv}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{n}{book\PYZus{}1}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+        \PY{c+c1}{\PYZsh{} Change the index to property id}
+        \PY{n}{book\PYZus{}2} \PY{o}{=} \PY{n}{book\PYZus{}1}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{c+c1}{\PYZsh{} Sort the dataset so that all property id bookings are together}
+        \PY{n}{book\PYZus{}3} \PY{o}{=} \PY{n}{book\PYZus{}2}\PY{o}{.}\PY{n}{sort\PYZus{}index}\PY{p}{(}\PY{p}{)}
+        
+        
+        \PY{c+c1}{\PYZsh{} If the booking is greater than 7 days then may not be a customer}
+        \PY{c+c1}{\PYZsh{} If the booking is greater than 14 days then assume it is blocked out and not a booking}
+        \PY{n}{book\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{book\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{map}\PY{p}{(}\PY{k}{lambda} \PY{n}{x}\PY{p}{:} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Host}\PY{l+s+s1}{\PYZsq{}} \PY{k}{if} \PY{n}{x} \PY{o}{\PYZgt{}} \PY{l+m+mi}{14} \PY{k}{else} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Cust}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{n}{book\PYZus{}cust\PYZus{}1} \PY{o}{=} \PY{n}{book\PYZus{}3}\PY{p}{[}\PY{n}{book\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Cust}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{c+c1}{\PYZsh{} Get the dates which are after the date\PYZus{}str}
+        
+        \PY{c+c1}{\PYZsh{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} data in csv is now the history data, split correctly by mth value}
+        
+        
+        \PY{c+c1}{\PYZsh{} Only take the next 30 days and see how many bookings there are in total}
+        \PY{c+c1}{\PYZsh{}date\PYZus{}1 = datetime.datetime.strptime(date\PYZus{}str, \PYZdq{}\PYZpc{}Y\PYZhy{}\PYZpc{}m\PYZhy{}\PYZpc{}d\PYZdq{})}
+        
+        \PY{c+c1}{\PYZsh{}date\PYZus{}30 = date\PYZus{}1 + datetime.timedelta(days=29)}
+        
+        \PY{c+c1}{\PYZsh{} This gives 30 days inclusive of the start date}
+        \PY{c+c1}{\PYZsh{}print(date\PYZus{}30.strftime(\PYZsq{}29 Days time is \PYZpc{}d, \PYZpc{}b \PYZpc{}Y\PYZsq{}))}
+        
+        \PY{c+c1}{\PYZsh{}book\PYZus{}cust\PYZus{}2 = book\PYZus{}cust\PYZus{}1[book\PYZus{}cust\PYZus{}1[\PYZsq{}arr\PYZus{}dt\PYZsq{}] \PYZgt{}= date\PYZus{}1]}
+        \PY{c+c1}{\PYZsh{}book\PYZus{}cust\PYZus{}3 = book\PYZus{}cust\PYZus{}2[book\PYZus{}cust\PYZus{}2[\PYZsq{}arr\PYZus{}dt\PYZsq{}] \PYZlt{}= date\PYZus{}30]}
+        
+        \PY{n}{book\PYZus{}cust\PYZus{}1}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+        
+        \PY{n}{book\PYZus{}cust} \PY{o}{=} \PY{n}{book\PYZus{}cust\PYZus{}1}
+        
+        \PY{n}{book\PYZus{}cust}\PY{o}{.}\PY{n}{info}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 
 
-    Create a function to convert our numpy arrays into a format that can be
-handled by the HTTP POST request we pass to the inference container. In
-this case it's a simple CSV string. The results will be published back
-as JSON. For these common formats we can use the Amazon SageMaker Python
-SDK's built in csv\_serializer and json\_deserializer functions.
+    \begin{Verbatim}[commandchars=\\\{\}]
+<class 'pandas.core.frame.DataFrame'>
+Int64Index: 49793 entries, 52 to 9228676
+Data columns (total 4 columns):
+mth           49793 non-null int64
+book\_days     49793 non-null int64
+book\_count    49793 non-null int64
+book\_type     49793 non-null object
+dtypes: int64(3), object(1)
+memory usage: 1.9+ MB
+
+    \end{Verbatim}
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{n}{linear\PYZus{}predictor}\PY{o}{.}\PY{n}{content\PYZus{}type} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{text/csv}\PY{l+s+s1}{\PYZsq{}}
-        \PY{n}{linear\PYZus{}predictor}\PY{o}{.}\PY{n}{serializer} \PY{o}{=} \PY{n}{csv\PYZus{}serializer}
-        \PY{n}{linear\PYZus{}predictor}\PY{o}{.}\PY{n}{deserializer} \PY{o}{=} \PY{n}{json\PYZus{}deserializer}
+{\color{incolor}In [{\color{incolor}6}]:} \PY{c+c1}{\PYZsh{} Calculate the number of booked days for the \PYZsq{}Cust\PYZsq{} type of bookings since b3 is the customers exc hosts}
+        \PY{c+c1}{\PYZsh{}book\PYZus{}sum = book\PYZus{}cust.groupby([\PYZsq{}property\PYZus{}id\PYZsq{}]).sum()}
+        
+        \PY{c+c1}{\PYZsh{} Rename the column as total\PYZus{}booked\PYZus{}days}
+        \PY{c+c1}{\PYZsh{}book\PYZus{}sum.columns = [\PYZsq{}total\PYZus{}booked\PYZus{}days\PYZsq{}]}
+        
+        \PY{n}{book\PYZus{}sum} \PY{o}{=} \PY{n}{book\PYZus{}cust}
+        
+        \PY{n}{book\PYZus{}sum}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+        
+        \PY{c+c1}{\PYZsh{}print(\PYZdq{}book\PYZus{}sum index: \PYZdq{} + str(book\PYZus{}sum.index.dtype\PYZus{}str))}
+        
+        \PY{c+c1}{\PYZsh{}book\PYZus{}sum.info()}
 \end{Verbatim}
 
 
-    \subsection{7. Run Model with Test
-Dataset}\label{run-model-with-test-dataset}
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}6}]:}              mth  book\_days  book\_count book\_type
+        property\_id                                      
+        52             3          5           2      Cust
+        52             4          1           1      Cust
+        528            3          3           1      Cust
+        528            4          1           1      Cust
+        717            3          8           3      Cust
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}7}]:} \PY{c+c1}{\PYZsh{} Check a specific property\PYZus{}id to make sure the individual bookings are calculated correctly}
+        \PY{n}{a} \PY{o}{=} \PY{n}{book\PYZus{}cust}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{l+m+mi}{8131}\PY{p}{]}
+        
+        \PY{n}{a}
+        \PY{c+c1}{\PYZsh{}a.sort\PYZus{}values(by=[\PYZsq{}arr\PYZus{}dt\PYZsq{}])}
+\end{Verbatim}
 
-Now that the model has been deployed to an endpoint we can call this
-model with the test dataset, then extract the predictions into the
-\texttt{one\_step} variable
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}7}]:}              mth  book\_days  book\_count book\_type
+        property\_id                                      
+        8131           3          7           2      Cust
+        8131           4          6           2      Cust
+        8131           5         10           3      Cust
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor} }]:} 
+\end{Verbatim}
+
+
+    \subsection{Dataset 4 - Calendar}\label{dataset-4---calendar}
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{n}{test\PYZus{}X} \PY{o}{=} \PY{n}{X\PYZus{}test}\PY{o}{.}\PY{n}{as\PYZus{}matrix}\PY{p}{(}\PY{p}{)}
+{\color{incolor}In [{\color{incolor}8}]:} \PY{c+c1}{\PYZsh{} Read the Calendar extract to get additional details}
+        \PY{n}{cal\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}json}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}calendar/stayz\PYZus{}calendar\PYZus{}}\PY{l+s+s1}{\PYZsq{}} \PY{o}{+} \PY{n}{date\PYZus{}str} \PY{o}{+} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{.json.zip}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
         
-        \PY{n}{result} \PY{o}{=} \PY{n}{linear\PYZus{}predictor}\PY{o}{.}\PY{n}{predict}\PY{p}{(}\PY{n}{test\PYZus{}X}\PY{p}{)}
+        \PY{c+c1}{\PYZsh{} Change values of \PYZhy{}1.0 into NaN for stats analysis}
+        \PY{n}{cal\PYZus{}1}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{cal\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{review\PYZus{}count}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{o}{\PYZhy{}}\PY{l+m+mf}{1.0}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{review\PYZus{}count}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{nan}
+        \PY{n}{cal\PYZus{}1}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{cal\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{review\PYZus{}value}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{o}{\PYZhy{}}\PY{l+m+mf}{1.0}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{review\PYZus{}value}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{nan}
         
-        \PY{n}{one\PYZus{}step} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{p}{[}\PY{n}{r}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{score}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{k}{for} \PY{n}{r} \PY{o+ow}{in} \PY{n}{result}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{predictions}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{p}{)}
+        \PY{n}{cal\PYZus{}2} \PY{o}{=} \PY{n}{cal\PYZus{}1}\PY{o}{.}\PY{n}{drop}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{calendar}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}
+        
+        \PY{n}{cal\PYZus{}3} \PY{o}{=} \PY{n}{cal\PYZus{}2}\PY{p}{[}\PY{p}{(}\PY{n}{cal\PYZus{}2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{!=} \PY{l+m+mi}{0}\PY{p}{)} \PY{o}{\PYZam{}} \PY{p}{(}\PY{n}{cal\PYZus{}2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{!=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{]}
+        
+        \PY{n}{cal\PYZus{}4} \PY{o}{=} \PY{n}{cal\PYZus{}3}
+        
+        \PY{n}{cal\PYZus{}4}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{cal\PYZus{}4}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{astype}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{int64}\PY{p}{)}
+        
+        \PY{n}{cal\PYZus{}5} \PY{o}{=} \PY{n}{cal\PYZus{}4}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+        
+        \PY{n}{cal\PYZus{}6} \PY{o}{=} \PY{n}{cal\PYZus{}5}\PY{o}{.}\PY{n}{sort\PYZus{}index}\PY{p}{(}\PY{p}{)}
+        
+        \PY{n}{cal} \PY{o}{=} \PY{n}{cal\PYZus{}6}
+        
+        \PY{n}{cal}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Find some values from the test data to validate where the number of booked days is non zero}
+/Users/taj/anaconda3/lib/python3.6/site-packages/ipykernel\_launcher.py:14: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row\_indexer,col\_indexer] = value instead
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html\#indexing-view-versus-copy
+  
+
+    \end{Verbatim}
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}8}]:}                          ext\_at  \textbackslash{}
+        property\_id                       
+        6262        2018-05-31 10:30:31   
+        12584       2018-05-31 10:20:37   
+        18350       2018-05-31 10:03:33   
+        24798       2018-05-31 09:29:25   
+        27108       2018-05-31 10:13:45   
         
-        \PY{n}{X\PYZus{}test}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{total\PYZus{}booked\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{:}\PY{l+m+mi}{10}\PY{p}{]}
+                                                              features  photos  \textbackslash{}
+        property\_id                                                              
+        6262         Balcony\textbackslash{}nChildren welcome\textbackslash{}nDVD player\textbackslash{}nGames\textbackslash{}n{\ldots}      24   
+        12584        Child's high chair\textbackslash{}nClothes dryer\textbackslash{}nCot\textbackslash{}nDVD pl{\ldots}       7   
+        18350        Air conditioning\textbackslash{}nBooks\textbackslash{}nCeiling fan\textbackslash{}nChild's {\ldots}       6   
+        24798        Balcony\textbackslash{}nCeiling fan\textbackslash{}nChild's high chair\textbackslash{}nChil{\ldots}      19   
+        27108        Air conditioning\textbackslash{}nBooks\textbackslash{}nCeiling fan\textbackslash{}nChild's {\ldots}       6   
+        
+                     review\_count  review\_value  
+        property\_id                              
+        6262                  6.0           4.7  
+        12584                 6.0           4.5  
+        18350               115.0           4.7  
+        24798                47.0           5.0  
+        27108                80.0           4.7  
+\end{Verbatim}
+            
+    \subsection{Dataset 5 - Features
+matrix}\label{dataset-5---features-matrix}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}9}]:} \PY{c+c1}{\PYZsh{} Load the features CSV}
+        \PY{n}{feat\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}csv}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}features/stayz\PYZus{}nsw\PYZus{}features\PYZus{}}\PY{l+s+s1}{\PYZsq{}} \PY{o}{+} \PY{n}{date\PYZus{}str} \PY{o}{+} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{.csv}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{n}{feat\PYZus{}2} \PY{o}{=} \PY{n}{feat\PYZus{}1}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Unnamed: 0}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{n}{feat\PYZus{}2}\PY{o}{.}\PY{n}{index}\PY{o}{.}\PY{n}{names} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{n}{feat} \PY{o}{=} \PY{n}{feat\PYZus{}2}
+        
+        \PY{n}{feat}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}9}]:}              f\_air\_conditioning  f\_balcony  f\_books  f\_child\_s\_high\_chair  \textbackslash{}
+        property\_id                                                                 
+        9191650.0                     1          1        1                     1   
+        9067504.0                     1          0        1                     1   
+        9140176.0                     0          1        0                     1   
+        9060221.0                     0          1        1                     1   
+        9050878.0                     0          0        0                     0   
+        
+                     f\_children\_welcome  f\_coffee\_maker  f\_dining  \textbackslash{}
+        property\_id                                                 
+        9191650.0                     1               1         1   
+        9067504.0                     1               1         1   
+        9140176.0                     1               1         1   
+        9060221.0                     1               1         1   
+        9050878.0                     0               0         0   
+        
+                     f\_dishes\_and\_utensils  f\_dishwasher  f\_games     {\ldots}       \textbackslash{}
+        property\_id                                                   {\ldots}        
+        9191650.0                        1             1        1     {\ldots}        
+        9067504.0                        1             1        1     {\ldots}        
+        9140176.0                        1             1        1     {\ldots}        
+        9060221.0                        1             1        0     {\ldots}        
+        9050878.0                        0             0        0     {\ldots}        
+        
+                     f\_hot\_tub  f\_heated\_pool  f\_events\_allowed  f\_communal\_pool  \textbackslash{}
+        property\_id                                                                
+        9191650.0            0              0                 0                0   
+        9067504.0            0              0                 0                0   
+        9140176.0            0              0                 0                0   
+        9060221.0            0              0                 0                0   
+        9050878.0            0              0                 0                0   
+        
+                     f\_indoor\_pool  f\_sauna  f\_pantry\_items  f\_cot  f\_eco\_friendly  \textbackslash{}
+        property\_id                                                                  
+        9191650.0                0        0               0      0               0   
+        9067504.0                0        0               0      0               0   
+        9140176.0                0        0               0      0               0   
+        9060221.0                0        0               0      0               0   
+        9050878.0                0        0               0      0               0   
+        
+                     f\_free\_wifi  
+        property\_id               
+        9191650.0              0  
+        9067504.0              0  
+        9140176.0              0  
+        9060221.0              0  
+        9050878.0              0  
+        
+        [5 rows x 59 columns]
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}10}]:} \PY{c+c1}{\PYZsh{} Create a derived table to map the property\PYZus{}type to an integer}
+         \PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{DataFrame}\PY{p}{(}\PY{n}{nsw\PYZus{}extract}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{unique}\PY{p}{(}\PY{p}{)}\PY{p}{)}
+         \PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}1}\PY{o}{.}\PY{n}{columns} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Reset the index so we can filter on \PYZsq{}property\PYZus{}type\PYZsq{}}
+         \PY{c+c1}{\PYZsh{}prop\PYZus{}type\PYZus{}table\PYZus{}1.reset\PYZus{}index(inplace=True)}
+         
+         
+         \PY{c+c1}{\PYZsh{} Remove the following property types:}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Campervan}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Caravan}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Hotel}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Motel}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Other}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Resort}
+         \PY{c+c1}{\PYZsh{} \PYZhy{} Yacht}
+         
+         \PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}2} \PY{o}{=} \PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}1}\PY{p}{[}\PY{o}{\PYZti{}}\PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{isin}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Campervan}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Caravan}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Hotel}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Motel}\PY{l+s+s1}{\PYZsq{}}
+                                                                                      \PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Other}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Resort}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Yacht}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Add a column with the property type id as a generated number}
+         \PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{prop\PYZus{}type\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}2}\PY{p}{)}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{}prop\PYZus{}type\PYZus{}table\PYZus{}2.drop([\PYZsq{}prop\PYZus{}type\PYZus{}count\PYZsq{}])}
+         
+         \PY{n}{prop\PYZus{}type\PYZus{}table} \PY{o}{=} \PY{n}{prop\PYZus{}type\PYZus{}table\PYZus{}2}
+         
+         \PY{n}{prop\PYZus{}type\PYZus{}table}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{l+m+mi}{25}\PY{p}{)}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Since the first item (index position 0) has some bookings we can look at the result vs the predicted result}
-        \PY{n}{test\PYZus{}index} \PY{o}{=} \PY{l+m+mi}{0}
-        
-        \PY{n}{pred\PYZus{}price} \PY{o}{=} \PY{n}{one\PYZus{}step}\PY{p}{[}\PY{n}{test\PYZus{}index}\PY{p}{]}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Prediction: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n}{pred\PYZus{}price}\PY{p}{)}\PY{p}{)}
-        
-        \PY{n}{act\PYZus{}price} \PY{o}{=} \PY{n}{X\PYZus{}test}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{test\PYZus{}index}\PY{p}{]}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{total\PYZus{}booked\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Actual: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n}{act\PYZus{}price}\PY{p}{)}\PY{p}{)}
-        
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Difference: }\PY{l+s+si}{\PYZob{}0:.2f\PYZcb{}}\PY{l+s+s2}{\PYZpc{}}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{p}{(}\PY{p}{(}\PY{p}{(}\PY{n}{act\PYZus{}price} \PY{o}{\PYZhy{}} \PY{n}{pred\PYZus{}price}\PY{p}{)}\PY{o}{/}\PY{n}{act\PYZus{}price}\PY{p}{)}\PY{o}{*}\PY{l+m+mi}{100}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+/Users/taj/anaconda3/lib/python3.6/site-packages/ipykernel\_launcher.py:22: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row\_indexer,col\_indexer] = value instead
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html\#indexing-view-versus-copy
+
+    \end{Verbatim}
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}10}]:}    property\_type  prop\_type\_id
+         0        Cottage             0
+         1          House             1
+         3      Apartment             2
+         4      Townhouse             3
+         5            B\&B             4
+         6          Villa             5
+         7          Cabin             6
+         8          Guest             7
+         9         Studio             8
+         10      Farmstay             9
+         11        Chalet            10
+         12         Lodge            11
+         19     Houseboat            12
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}11}]:} \PY{c+c1}{\PYZsh{} Extract the council, postcode, and suburb unique values and convert to integer:}
+         
+         \PY{c+c1}{\PYZsh{} Join back to \PYZsq{}geodata\PYZsq{} and keep the property\PYZus{}id!!!}
+         
+         \PY{n}{council\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{DataFrame}\PY{p}{(}\PY{n}{geodata}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{council}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{unique}\PY{p}{(}\PY{p}{)}\PY{p}{)}
+         \PY{n}{council\PYZus{}1}\PY{o}{.}\PY{n}{columns} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{council}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         \PY{n}{council\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{council\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{council\PYZus{}1}\PY{p}{)}\PY{p}{)}
+         
+         \PY{n}{council\PYZus{}1}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 
 
-    Work out the difference between the prediction and the results for all
-the test set
-
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}11}]:}           council  council\_id
+         0         Gosford           0
+         1       Pittwater           1
+         2     Great Lakes           2
+         3      Shoalhaven           3
+         4  Blue Mountains           4
+\end{Verbatim}
+            
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{k+kn}{from} \PY{n+nn}{numpy} \PY{k}{import} \PY{n}{inf}
-        
-        \PY{n}{res1} \PY{o}{=} \PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{abs}\PY{p}{(}\PY{n}{y\PYZus{}test} \PY{o}{\PYZhy{}} \PY{n}{one\PYZus{}step}\PY{p}{)} \PY{o}{/} \PY{n}{y\PYZus{}test}\PY{p}{)}
-        
-        \PY{c+c1}{\PYZsh{} If the result is \PYZsq{}inf\PYZsq{} then default to zero}
-        \PY{n}{res1}\PY{p}{[}\PY{n}{res1} \PY{o}{==} \PY{n}{inf}\PY{p}{]} \PY{o}{=} \PY{l+m+mi}{0}
-        
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Median differencet: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{median}\PY{p}{(}\PY{n}{res1}\PY{p}{)}\PY{p}{)}\PY{p}{)}
-        
-        \PY{c+c1}{\PYZsh{} Check the first few records}
-        \PY{n}{res1}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{:}\PY{l+m+mi}{5}\PY{p}{]}
+{\color{incolor}In [{\color{incolor}12}]:} \PY{c+c1}{\PYZsh{} Extract the council, postcode, and suburb unique values and convert to integer:}
+         
+         \PY{n}{suburb\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{DataFrame}\PY{p}{(}\PY{n}{geodata}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{unique}\PY{p}{(}\PY{p}{)}\PY{p}{)}
+         \PY{n}{suburb\PYZus{}1}\PY{o}{.}\PY{n}{columns} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         \PY{n}{suburb\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{suburb\PYZus{}1}\PY{p}{)}\PY{p}{)}
+         
+         \PY{n}{suburb\PYZus{}1}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 
 
-    \subsection{8. Graph Results}\label{graph-results}
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}12}]:}             suburb  suburb\_id
+         0      Avoca Beach          0
+         1       Palm Beach          1
+         2  Boomerang Beach          2
+         3        Vincentia          3
+         4      Smiths Lake          4
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}13}]:} \PY{c+c1}{\PYZsh{}geodata\PYZus{}1 = geodata.merge()}
+         
+         \PY{c+c1}{\PYZsh{} Join with property type, keeping property id as the index type}
+         \PY{n}{geodata\PYZus{}1} \PY{o}{=} \PY{p}{(}\PY{n}{geodata}\PY{o}{.}\PY{n}{reset\PYZus{}index}\PY{p}{(}\PY{p}{)}
+                      \PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{council\PYZus{}1}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{on}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{council}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+                      \PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                     \PY{p}{)}
+         
+         \PY{n}{geodata\PYZus{}2} \PY{o}{=} \PY{p}{(}\PY{n}{geodata\PYZus{}1}\PY{o}{.}\PY{n}{reset\PYZus{}index}\PY{p}{(}\PY{p}{)}
+                      \PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{suburb\PYZus{}1}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{on}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+                      \PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                     \PY{p}{)}
+         
+         \PY{n}{geodata\PYZus{}3} \PY{o}{=} \PY{n}{geodata\PYZus{}2}\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{postcode}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{council\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+         
+         
+         
+         \PY{n}{geodata\PYZus{}rev} \PY{o}{=} \PY{n}{geodata\PYZus{}3}
+         
+         \PY{n}{geodata\PYZus{}rev}\PY{o}{.}\PY{n}{tail}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
 
-Graph the actual values vs predicted values for a slice of the dataset.
 
-\textbf{Note:} The predicted values are all within a fraction of the
-actual result, ie 17.0 vs 16.818 for the first element. This means that
-the results are hard to see visually.
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}13}]:}             postcode  council\_id  suburb\_id
+         property\_id                                
+         9228588         2251           0          0
+         9228590         2577           9         58
+         9228599         2488          12        244
+         9228610         2448          39        124
+         9228676         2481           8        108
+\end{Verbatim}
+            
+    \subsection{Dataset 6 - Page Position}\label{dataset-6---page-position}
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{One\PYZhy{}step = }\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{median}\PY{p}{(}\PY{n}{res1}\PY{p}{)}\PY{p}{)}
-        
-        \PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{20}\PY{p}{,}\PY{l+m+mi}{10}\PY{p}{)}\PY{p}{)}
-        
-        \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{one\PYZus{}step}\PY{p}{[}\PY{l+m+mi}{200}\PY{p}{:}\PY{l+m+mi}{250}\PY{p}{]}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{forecast}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{y\PYZus{}test}\PY{p}{[}\PY{l+m+mi}{200}\PY{p}{:}\PY{l+m+mi}{250}\PY{p}{]}\PY{p}{)}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{actual}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{legend}\PY{p}{(}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{show}\PY{p}{(}\PY{p}{)}
+{\color{incolor}In [{\color{incolor}14}]:} \PY{c+c1}{\PYZsh{} Read the c\PYZus{}nsw\PYZus{}extract to get the page position}
+         
+         \PY{n}{page\PYZus{}pos\PYZus{}1} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}json}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}extract/c\PYZus{}stayz\PYZus{}nsw\PYZus{}extract\PYZus{}}\PY{l+s+s1}{\PYZsq{}} \PY{o}{+} \PY{n}{date\PYZus{}str} \PY{o}{+} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{.json}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{page\PYZus{}pos\PYZus{}2} \PY{o}{=} \PY{n}{page\PYZus{}pos\PYZus{}1}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+         
+         \PY{n}{page\PYZus{}pos\PYZus{}3} \PY{o}{=} \PY{n}{page\PYZus{}pos\PYZus{}2}\PY{o}{.}\PY{n}{drop}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{scraped\PYZus{}date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}
+         
+         \PY{n}{page\PYZus{}pos} \PY{o}{=} \PY{n}{page\PYZus{}pos\PYZus{}3}
+         
+         \PY{n}{page\PYZus{}pos}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}14}]:}              page\_nbr  page\_pos
+         property\_id                    
+         103178              1        50
+         9191650             1         1
+         9137508             1         1
+         103169              1        49
+         9177246             1        50
+\end{Verbatim}
+            
+    \subsection{NSW Data Set}\label{nsw-data-set}
+
+Perform some filtering and data cleansing to get the basic data set
+ready.
+
+The output is the 'nsw\_data' parameter
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}15}]:} \PY{c+c1}{\PYZsh{} Filter for 4 or less guests}
+         \PY{n}{nsw\PYZus{}data\PYZus{}s1} \PY{o}{=} \PY{n}{nsw\PYZus{}extract}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}extract}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{6}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Filter for 4 or less bathrooms}
+         \PY{n}{nsw\PYZus{}data\PYZus{}s2} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}s1}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data\PYZus{}s1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bathrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{4} \PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Filter for 2 or less bedrooms}
+         \PY{n}{nsw\PYZus{}data\PYZus{}s3} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}s2}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data\PYZus{}s2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bedrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{2} \PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Filter where straight line distance to Sydney between 80\PYZhy{}150km}
+         \PY{n}{nsw\PYZus{}data\PYZus{}s4} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}s3}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{(}\PY{n}{nsw\PYZus{}data\PYZus{}s3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{syd\PYZus{}dist\PYZus{}km}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}}\PY{o}{=} \PY{l+m+mi}{100}\PY{p}{)} \PY{o}{\PYZam{}} \PY{p}{(}\PY{n}{nsw\PYZus{}data\PYZus{}s3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{syd\PYZus{}dist\PYZus{}km}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{250}\PY{p}{)}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Only look at North properties}
+         \PY{n}{nsw\PYZus{}data\PYZus{}s5} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}s4}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{(}\PY{n}{nsw\PYZus{}data\PYZus{}s4}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{syd\PYZus{}brg}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{SW}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{]}
+         
+         
+         \PY{c+c1}{\PYZsh{} Use this to switch between the full dataset or a specific subset}
+         \PY{c+c1}{\PYZsh{}nsw\PYZus{}data = nsw\PYZus{}data\PYZus{}s5}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{} Run some housing details manually to see what changes}
-        
-        \PY{c+c1}{\PYZsh{}linear\PYZus{}predictor.predict() \PYZsh{}expected label to be 1}
+{\color{incolor}In [{\color{incolor}16}]:} \PY{c+c1}{\PYZsh{} Filter out the outliers or ridiculous values}
+         \PY{n}{nsw\PYZus{}data\PYZus{}a1} \PY{o}{=} \PY{n}{nsw\PYZus{}extract}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}extract}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{10000} \PY{p}{]}
+         \PY{n}{nsw\PYZus{}data\PYZus{}a2} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}a1}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data\PYZus{}a1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{14} \PY{p}{]}
+         \PY{n}{nsw\PYZus{}data\PYZus{}a3} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}a2}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data\PYZus{}a2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{syd\PYZus{}dist\PYZus{}km}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZlt{}}\PY{o}{=} \PY{l+m+mi}{1000} \PY{p}{]}
+         \PY{n}{nsw\PYZus{}data\PYZus{}a4} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}a3}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data\PYZus{}a3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}} \PY{l+m+mi}{0} \PY{p}{]}
+         
+         
+         \PY{c+c1}{\PYZsh{} Exclude properties within Sydney}
+         \PY{n}{nsw\PYZus{}data\PYZus{}a5} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}a4}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data\PYZus{}a4}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{syd\PYZus{}dist\PYZus{}km}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}} \PY{l+m+mi}{50} \PY{p}{]}
+         
+         
+         \PY{c+c1}{\PYZsh{} Use this to write out the full dataset}
+         \PY{n}{nsw\PYZus{}data} \PY{o}{=} \PY{n}{nsw\PYZus{}data\PYZus{}a5}
+         
+         \PY{n}{nsw\PYZus{}data}\PY{o}{.}\PY{n}{describe}\PY{p}{(}\PY{p}{)}
 \end{Verbatim}
 
 
-    \subsubsection{(Optional) Clean-up}\label{optional-clean-up}
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}16}]:}           bathrooms      bedrooms          beds  description\_wc        guests  \textbackslash{}
+         count  14525.000000  14525.000000  14525.000000    14525.000000  14525.000000   
+         mean       1.779828      2.903201      4.147608      192.458657      6.534802   
+         std        0.883767      1.162443      2.125625      109.196102      2.546641   
+         min        0.000000      0.000000      0.000000        0.000000      1.000000   
+         25\%        1.000000      2.000000      3.000000      113.000000      5.000000   
+         50\%        2.000000      3.000000      4.000000      166.000000      6.000000   
+         75\%        2.000000      4.000000      5.000000      243.000000      8.000000   
+         max       30.000000     30.000000    100.000000      784.000000     14.000000   
+         
+                  init\_price           lat           lng       reviews   syd\_brg\_deg  \textbackslash{}
+         count  14525.000000  14525.000000  14525.000000  14525.000000  14525.000000   
+         mean     251.422169    -33.013246    151.409286      6.149604    115.019484   
+         std      201.308084      2.431852      1.594652     12.694312    103.969901   
+         min        8.000000    -41.461440    141.443710      0.000000      0.000000   
+         25\%      132.000000    -35.040000    150.466020      0.000000     22.000000   
+         50\%      196.000000    -33.300297    151.420300      1.000000     33.000000   
+         75\%      300.000000    -31.439861    152.825150      6.000000    203.000000   
+         max     3614.000000    -27.438309    153.636810    197.000000    359.000000   
+         
+                 syd\_dist\_km  
+         count  14525.000000  
+         mean     267.410671  
+         std      188.881277  
+         min       51.000000  
+         25\%      122.000000  
+         50\%      194.000000  
+         75\%      370.000000  
+         max      935.000000  
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}17}]:} \PY{c+c1}{\PYZsh{} Testing \PYZhy{} look in detail at any outliers}
+         
+         \PY{n}{t1} \PY{o}{=} \PY{n}{nsw\PYZus{}data}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{nsw\PYZus{}data}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}}\PY{o}{=} \PY{l+m+mi}{1000}\PY{p}{]}
+         \PY{n}{t1}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
 
-If you're ready to be done with this notebook, please run the cell
-below. This will remove the hosted endpoint you created and avoid any
-charges from a stray instance being left on.
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}17}]:}              bathrooms  bedrooms  beds  \textbackslash{}
+         property\_id                              
+         61798                3         6     9   
+         92370                3         5     8   
+         93319                3         4     6   
+         101790               4         6    10   
+         112005               3         5     5   
+         
+                                                       description\_full  \textbackslash{}
+         property\_id                                                      
+         61798        ['Cuttagee' is situated less than five minutes{\ldots}   
+         92370        [BOND: \$2000 Payable on arrival, NB: Further d{\ldots}   
+         93319        [Arguably one of the best Winda Woppa residenc{\ldots}   
+         101790       [Something quite special and unique. Spectacul{\ldots}   
+         112005       [Luxuriously decorated with comfort in mind, V{\ldots}   
+         
+                      description\_wc  guests  \textbackslash{}
+         property\_id                           
+         61798                   149      12   
+         92370                   143      10   
+         93319                    47      10   
+         101790                  378      14   
+         112005                  283       9   
+         
+                                                                heading  init\_price  \textbackslash{}
+         property\_id                                                                  
+         61798                     Cuttagee - luxury on the South Coast        1257   
+         92370                                                 Alantiem        1595   
+         93319                 Extraordinary Views - 91A The Boulevarde        1186   
+         101790                           Number 10 Bannister Mollymook        1015   
+         112005       Verandahs- Amazing gardens, spacious and private.        1020   
+         
+                            lat        lng property\_type  reviews         scraped\_date  \textbackslash{}
+         property\_id                                                                     
+         61798       -34.763412  150.66990         House       12  2018-05-31 01:19:12   
+         92370       -32.340940  152.54140         House        0  2018-05-31 01:17:40   
+         93319       -32.678050  152.16820         House        0  2018-05-31 01:09:50   
+         101790      -35.319000  150.47100         House       59  2018-05-31 01:20:48   
+         112005      -28.631075  153.47818         House        1  2018-05-31 01:06:04   
+         
+                     syd\_brg  syd\_brg\_deg  syd\_dist\_km  \textbackslash{}
+         property\_id                                     
+         61798            SW          208           97   
+         92370            NE           35          222   
+         93319            NE           32          172   
+         101790           SW          203          161   
+         112005            N           20          634   
+         
+                                                                    url  
+         property\_id                                                     
+         61798        https://www.stayz.com.au//accommodation/nsw/so{\ldots}  
+         92370        https://www.stayz.com.au//accommodation/nsw/no{\ldots}  
+         93319        https://www.stayz.com.au//accommodation/nsw/no{\ldots}  
+         101790       https://www.stayz.com.au//accommodation/nsw/so{\ldots}  
+         112005       https://www.stayz.com.au//accommodation/nsw/no{\ldots}  
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}18}]:} \PY{c+c1}{\PYZsh{} Set the number of bars for the graph}
+         \PY{n}{bin\PYZus{}values} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n}{start}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{stop}\PY{o}{=}\PY{l+m+mi}{660}\PY{p}{,} \PY{n}{step}\PY{o}{=}\PY{l+m+mi}{10}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Create the figure}
+         \PY{n}{f1} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{n}{num}\PY{o}{=}\PY{k+kc}{None}\PY{p}{,} \PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{30}\PY{p}{,} \PY{l+m+mi}{10}\PY{p}{)}\PY{p}{,} \PY{n}{dpi}\PY{o}{=}\PY{l+m+mi}{80}\PY{p}{,} \PY{n}{facecolor}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{w}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{edgecolor}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{k}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{ax} \PY{o}{=} \PY{n}{f1}\PY{o}{.}\PY{n}{add\PYZus{}subplot}\PY{p}{(}\PY{l+m+mi}{221}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{set}\PY{p}{(}\PY{n}{title}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Number of Properties vs Price}\PY{l+s+s1}{\PYZsq{}}
+               \PY{p}{,}\PY{n}{xlabel}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Price (\PYZdl{}AUD)}\PY{l+s+s1}{\PYZsq{}}
+               \PY{p}{,}\PY{n}{ylabel}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Number of Properties}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         
+         \PY{c+c1}{\PYZsh{} Get the initial price}
+         \PY{n}{x} \PY{o}{=} \PY{n}{nsw\PYZus{}data}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Remove the rows where price is empty (NaN)}
+         \PY{n}{x} \PY{o}{=} \PY{n}{x}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{p}{)}
+         
+         \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Total number of properties: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{x}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Plot a histogram of the init\PYZus{}price}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{hist}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{bins}\PY{o}{=}\PY{n}{bin\PYZus{}values}\PY{p}{,} \PY{n}{alpha}\PY{o}{=}\PY{o}{.}\PY{l+m+mi}{6}\PY{p}{)} \PY{c+c1}{\PYZsh{} alpha for transparency}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{show}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{}sess.delete\PYZus{}endpoint(linear\PYZus{}predictor.endpoint)}
+Total number of properties: 14525
+
+    \end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_26_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}19}]:} \PY{n}{nsw\PYZus{}data}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{value\PYZus{}counts}\PY{p}{(}\PY{p}{)}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{kind}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bar}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{title}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Number of Guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Count}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}19}]:} Text(0,0.5,'Count')
+\end{Verbatim}
+            
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_27_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}20}]:} \PY{n}{nsw\PYZus{}data}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{groupby}\PY{p}{(}\PY{n}{nsw\PYZus{}data}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{count}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}20}]:} guests
+         1        3
+         2      915
+         3      215
+         4     2412
+         5     1173
+         6     3627
+         7      964
+         8     2642
+         9      492
+         10    1159
+         11     204
+         12     481
+         13      85
+         14     153
+         Name: guests, dtype: int64
+\end{Verbatim}
+            
+    \subsection{Combined Data Set}\label{combined-data-set}
+
+Merge the 4 data files together to get the complete picture. * nsw\_data
+* geodata * cal * book\_sum
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}21}]:} \PY{c+c1}{\PYZsh{} Merge the nsw\PYZus{}extract with the geocoded data: only need the postcode, council, suburb. }
+         \PY{c+c1}{\PYZsh{} Convert them to integer values first}
+         
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}1} \PY{o}{=} \PY{n}{nsw\PYZus{}data}\PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{geodata\PYZus{}rev}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{left\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,} \PY{n}{right\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}2} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}1}\PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{cal}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{left\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,} \PY{n}{right\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}3} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}2}\PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{book\PYZus{}sum}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{left\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,} \PY{n}{right\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}4} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}3}\PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{feat}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{left\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,} \PY{n}{right\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Join with property type, keeping property id as the index type}
+         \PY{n}{full\PYZus{}dataset\PYZus{}5} \PY{o}{=} \PY{p}{(}\PY{n}{full\PYZus{}dataset\PYZus{}4}\PY{o}{.}\PY{n}{reset\PYZus{}index}\PY{p}{(}\PY{p}{)}
+                           \PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{prop\PYZus{}type\PYZus{}table}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{inner}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{on}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}type}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+                           \PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{property\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                          \PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{}full\PYZus{}dataset\PYZus{}5[\PYZsq{}total\PYZus{}booked\PYZus{}days\PYZsq{}][0:5]}
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}5}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}21}]:}              bathrooms  bedrooms  beds  \textbackslash{}
+         property\_id                              
+         1873                 3         6     8   
+         1873                 3         6     8   
+         1873                 3         6     8   
+         1873                 3         6     8   
+         5544                 1         3     5   
+         
+                                                       description\_full  \textbackslash{}
+         property\_id                                                      
+         1873         [Large home with 6 bedrooms 1 with ensuite, 2 {\ldots}   
+         1873         [Large home with 6 bedrooms 1 with ensuite, 2 {\ldots}   
+         1873         [Large home with 6 bedrooms 1 with ensuite, 2 {\ldots}   
+         1873         [Large home with 6 bedrooms 1 with ensuite, 2 {\ldots}   
+         5544         ['Avoca' is a heritage homestead destination o{\ldots}   
+         
+                      description\_wc  guests                           heading  \textbackslash{}
+         property\_id                                                             
+         1873                    135      13  Mana magic - 182 Elizabeth Drive   
+         1873                    135      13  Mana magic - 182 Elizabeth Drive   
+         1873                    135      13  Mana magic - 182 Elizabeth Drive   
+         1873                    135      13  Mana magic - 182 Elizabeth Drive   
+         5544                    240       6      Avoca-on-Darling Hospitality   
+         
+                      init\_price        lat        lng      {\ldots}      f\_heated\_pool  \textbackslash{}
+         property\_id                                        {\ldots}                      
+         1873                561 -35.066400  150.67400      {\ldots}                NaN   
+         1873                561 -35.066400  150.67400      {\ldots}                NaN   
+         1873                561 -35.066400  150.67400      {\ldots}                NaN   
+         1873                561 -35.066400  150.67400      {\ldots}                NaN   
+         5544                179 -33.930573  141.96753      {\ldots}                NaN   
+         
+                      f\_events\_allowed f\_communal\_pool f\_indoor\_pool  f\_sauna  \textbackslash{}
+         property\_id                                                            
+         1873                      NaN             NaN           NaN      NaN   
+         1873                      NaN             NaN           NaN      NaN   
+         1873                      NaN             NaN           NaN      NaN   
+         1873                      NaN             NaN           NaN      NaN   
+         5544                      NaN             NaN           NaN      NaN   
+         
+                      f\_pantry\_items f\_cot f\_eco\_friendly  f\_free\_wifi  prop\_type\_id  
+         property\_id                                                                  
+         1873                    NaN   NaN            NaN          NaN             0  
+         1873                    NaN   NaN            NaN          NaN             0  
+         1873                    NaN   NaN            NaN          NaN             0  
+         1873                    NaN   NaN            NaN          NaN             0  
+         5544                    NaN   NaN            NaN          NaN             0  
+         
+         [5 rows x 89 columns]
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}22}]:} \PY{c+c1}{\PYZsh{} Drop some unnecessary columns}
+         \PY{c+c1}{\PYZsh{}full\PYZus{}dataset\PYZus{}5.drop(columns=[\PYZsq{}lat\PYZsq{}, \PYZsq{}lng\PYZsq{},\PYZsq{}syd\PYZus{}brg\PYZsq{},\PYZsq{}scraped\PYZus{}date\PYZsq{},\PYZsq{}property\PYZus{}type\PYZsq{},\PYZsq{}features\PYZsq{},\PYZsq{}url\PYZsq{},\PYZsq{}description\PYZus{}full\PYZsq{},\PYZsq{}heading\PYZsq{}],inplace=True)}
+         
+         \PY{c+c1}{\PYZsh{} Replace any \PYZsq{}NaN\PYZsq{} values with zeros}
+         \PY{n}{full\PYZus{}dataset\PYZus{}5}\PY{o}{.}\PY{n}{fillna}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{inplace}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Sort based on the total booked days for the current 6 month window, sort descending}
+         \PY{c+c1}{\PYZsh{}full\PYZus{}dataset\PYZus{}6 = full\PYZus{}dataset\PYZus{}5.sort\PYZus{}values(by=[\PYZsq{}property\PYZus{}id\PYZsq{}], ascending=False)}
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}6} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}5}\PY{o}{.}\PY{n}{merge}\PY{p}{(}\PY{n}{page\PYZus{}pos}\PY{p}{,} \PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{left\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{,} \PY{n}{right\PYZus{}index}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+         
+         
+         \PY{c+c1}{\PYZsh{} Replace the number of days with only the bucket. For 30 day predictions we have 7 buckets as:}
+         \PY{c+c1}{\PYZsh{} 0 \PYZhy{} No bookins}
+         \PY{c+c1}{\PYZsh{} 1 \PYZhy{} 1\PYZhy{}5 days booked}
+         \PY{c+c1}{\PYZsh{} 2 \PYZhy{} 6\PYZhy{}10 days booked}
+         \PY{c+c1}{\PYZsh{} 3 \PYZhy{} 11\PYZhy{}15 days}
+         \PY{c+c1}{\PYZsh{} 4 \PYZhy{} 16\PYZhy{}20 days}
+         \PY{c+c1}{\PYZsh{} 5 \PYZhy{} 21\PYZhy{}25 days}
+         \PY{c+c1}{\PYZsh{} 6 \PYZhy{} 26\PYZhy{}30 days}
+         
+         
+         \PY{c+c1}{\PYZsh{}full\PYZus{}dataset\PYZus{}6[\PYZsq{}days\PYZus{}booked\PYZus{}bucket\PYZsq{}] = (full\PYZus{}dataset\PYZus{}6[\PYZsq{}total\PYZus{}booked\PYZus{}days\PYZsq{}]//15)}
+         \PY{c+c1}{\PYZsh{}full\PYZus{}dataset\PYZus{}6.drop([\PYZsq{}total\PYZus{}booked\PYZus{}days\PYZsq{}],axis=1,inplace=True)}
+         
+         
+         
+         \PY{c+c1}{\PYZsh{} Drop Property\PYZus{}ID and Postcode and Extracted\PYZus{}At date, Reviews and Review\PYZus{}Count are duplicates drop one}
+         \PY{c+c1}{\PYZsh{} Drop the council ID, the postcode should be enough identifier}
+         
+         \PY{n}{full\PYZus{}dataset\PYZus{}7} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}6}\PY{o}{.}\PY{n}{drop}\PY{p}{(}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{postcode}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ext\PYZus{}at}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{reviews}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{council\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}
+         
+         
+         \PY{c+c1}{\PYZsh{} Calculate the revenue}
+         \PY{n}{full\PYZus{}dataset\PYZus{}7}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}7}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{*} \PY{n}{full\PYZus{}dataset\PYZus{}7}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         
+         \PY{n}{full\PYZus{}dataset} \PY{o}{=} \PY{n}{full\PYZus{}dataset\PYZus{}7}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}24}]:} \PY{c+c1}{\PYZsh{} Write out the full dataset}
+         
+         \PY{n}{csv\PYZus{}out} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{o}{.}\PY{n}{to\PYZus{}csv}\PY{p}{(}\PY{p}{)}
+         
+         \PY{n}{fh} \PY{o}{=} \PY{n+nb}{open}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{/Users/taj/GitHub/scraping/stayz/WebData/nsw\PYZus{}fulldata/stayz\PYZus{}nsw\PYZus{}fulldata\PYZus{}}\PY{l+s+s1}{\PYZsq{}} \PY{o}{+} \PY{n}{date\PYZus{}str} \PY{o}{+} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{.csv}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{w}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{fh}\PY{o}{.}\PY{n}{write}\PY{p}{(}\PY{n}{csv\PYZus{}out}\PY{p}{)}
+         
+         \PY{n}{fh}\PY{o}{.}\PY{n}{close}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}25}]:} \PY{c+c1}{\PYZsh{} Find which suburb is Orange}
+         \PY{n}{org} \PY{o}{=} \PY{n}{suburb\PYZus{}1}\PY{p}{[}\PY{n}{suburb\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Mudgee}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} Suburb ID\PYZsq{}s}
+         \PY{c+c1}{\PYZsh{} Orange = 165}
+         \PY{c+c1}{\PYZsh{} Mudgee = 41}
+         \PY{c+c1}{\PYZsh{} Buckaroo = 683}
+         
+         \PY{n}{p1} \PY{o}{=} \PY{n}{suburb\PYZus{}1}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{l+m+mi}{165}\PY{p}{]}
+         \PY{n}{p1}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}25}]:} suburb       Orange
+         suburb\_id       165
+         Name: 165, dtype: object
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}63}]:} \PY{c+c1}{\PYZsh{} Find all the unique 10+ guest houses in orange}
+         
+         \PY{n}{o10\PYZus{}1} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+m+mi}{165}\PY{p}{]}
+         
+         \PY{n}{o10\PYZus{}2} \PY{o}{=} \PY{n}{o10\PYZus{}1}\PY{p}{[}\PY{n}{o10\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}}\PY{o}{=} \PY{l+m+mi}{10}\PY{p}{]}\PY{o}{.}\PY{n}{index}\PY{o}{.}\PY{n}{unique}\PY{p}{(}\PY{p}{)}
+         
+         \PY{n}{o10\PYZus{}2}
+         
+         \PY{c+c1}{\PYZsh{} 6 Unique property\PYZus{}id\PYZsq{}s: 9062114, 9137336, 9148674, 9168471, 9169308, 9199601}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}63}]:} Int64Index([9062114, 9137336, 9148674, 9168471, 9169308, 9199601], dtype='int64', name='property\_id')
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}57}]:} \PY{c+c1}{\PYZsh{} Find all houses of 10 guests or more in orange}
+         
+         \PY{n}{o10\PYZus{}1} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+m+mi}{165}\PY{p}{]}
+         
+         \PY{n}{o10\PYZus{}2} \PY{o}{=} \PY{n}{o10\PYZus{}1}\PY{p}{[}\PY{n}{o10\PYZus{}1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}}\PY{o}{=} \PY{l+m+mi}{10}\PY{p}{]}
+         
+         \PY{n}{o10\PYZus{}3} \PY{o}{=} \PY{n}{o10\PYZus{}2}\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bathrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bedrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{mth}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+         
+         \PY{n}{o10\PYZus{}3}\PY{o}{.}\PY{n}{sort\PYZus{}values}\PY{p}{(}\PY{n}{by}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{mth}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}57}]:}              bathrooms  bedrooms  guests  init\_price  mth  revenue
+         property\_id                                                       
+         9148674              1         4      10         175  2.0    350.0
+         9148674              1         4      10         175  3.0    875.0
+         9199601              4         6      12         807  3.0   2421.0
+         9168471              4         6      12        1033  3.0   3099.0
+         9062114              2         4      11         610  3.0   3660.0
+         9137336              2         6      14         350  3.0   4200.0
+         9169308              2         4      10         390  3.0   4290.0
+         9137336              2         6      14         350  4.0    350.0
+         9169308              2         4      10         390  4.0   1560.0
+         9148674              1         4      10         175  4.0   1925.0
+         9199601              4         6      12         807  4.0   3228.0
+         9168471              4         6      12        1033  4.0  12396.0
+         9169308              2         4      10         390  5.0   1170.0
+         9137336              2         6      14         350  5.0   2100.0
+         9199601              4         6      12         807  5.0   2421.0
+         9168471              4         6      12        1033  5.0   4132.0
+         9148674              1         4      10         175  6.0    700.0
+         9169308              2         4      10         390  6.0   2340.0
+         9137336              2         6      14         350  6.0   2800.0
+         9137336              2         6      14         350  7.0      0.0
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}26}]:} \PY{c+c1}{\PYZsh{} Histogram of how many properties get bookings}
+         
+         
+         
+         \PY{c+c1}{\PYZsh{} Set the number of bars for the graph}
+         \PY{n}{bin\PYZus{}values} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n}{start}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{stop}\PY{o}{=}\PY{l+m+mi}{16}\PY{p}{,} \PY{n}{step}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Create the figure}
+         \PY{n}{f1} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{n}{num}\PY{o}{=}\PY{k+kc}{None}\PY{p}{,} \PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{30}\PY{p}{,} \PY{l+m+mi}{10}\PY{p}{)}\PY{p}{,} \PY{n}{dpi}\PY{o}{=}\PY{l+m+mi}{80}\PY{p}{,} \PY{n}{facecolor}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{w}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{edgecolor}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{k}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{ax} \PY{o}{=} \PY{n}{f1}\PY{o}{.}\PY{n}{add\PYZus{}subplot}\PY{p}{(}\PY{l+m+mi}{221}\PY{p}{)}
+         
+         \PY{n}{rects} \PY{o}{=} \PY{n}{ax}\PY{o}{.}\PY{n}{patches}
+         
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{xticks}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n+nb}{min}\PY{p}{(}\PY{n}{x}\PY{p}{)}\PY{p}{,} \PY{l+m+mi}{16}\PY{p}{,} \PY{l+m+mi}{1}\PY{p}{)}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{}plt.yticks(np.arange(min(x), max(x)+1, 1.0))}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{style}\PY{o}{.}\PY{n}{use}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{seaborn\PYZhy{}white}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{ax}\PY{o}{.}\PY{n}{set}\PY{p}{(}\PY{n}{title}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Number of Properties vs Days Booked}\PY{l+s+s1}{\PYZsq{}}
+               \PY{p}{,}\PY{n}{xlabel}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Days Booked}\PY{l+s+s1}{\PYZsq{}}
+               \PY{p}{,}\PY{n}{ylabel}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Number of Properties}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{ax}\PY{o}{.}\PY{n}{patch}\PY{o}{.}\PY{n}{set\PYZus{}facecolor}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsh{}FFFFFF}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{ax}\PY{o}{.}\PY{n}{spines}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{top}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}linewidth}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{spines}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bottom}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}linewidth}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{spines}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{left}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}linewidth}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{spines}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{right}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}linewidth}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{)}
+         
+         \PY{n}{frame1} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{gca}\PY{p}{(}\PY{p}{)}
+         \PY{n}{frame1}\PY{o}{.}\PY{n}{axes}\PY{o}{.}\PY{n}{get\PYZus{}yaxis}\PY{p}{(}\PY{p}{)}\PY{o}{.}\PY{n}{set\PYZus{}visible}\PY{p}{(}\PY{k+kc}{False}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Get the initial price}
+         \PY{n}{a1} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{mth}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+m+mi}{4}\PY{p}{]}
+         
+         \PY{n}{a2} \PY{o}{=} \PY{n}{a1}\PY{p}{[}\PY{n}{a1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{isin}\PY{p}{(}\PY{p}{[}\PY{l+m+mi}{165}\PY{p}{]}\PY{p}{)}\PY{p}{]}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         
+         \PY{n}{x} \PY{o}{=} \PY{n}{a2}
+         
+         \PY{c+c1}{\PYZsh{}x2 = full\PYZus{}dataset[full\PYZus{}dataset[\PYZsq{}guests\PYZsq{}] \PYZgt{} 8]}
+         
+         
+         \PY{c+c1}{\PYZsh{} Remove the rows where price is empty (NaN)}
+         \PY{n}{x} \PY{o}{=} \PY{n}{x}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{p}{)}
+         
+         \PY{n}{ax}\PY{o}{.}\PY{n}{hist}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{bins}\PY{o}{=}\PY{n}{bin\PYZus{}values}\PY{o}{\PYZhy{}}\PY{l+m+mf}{0.5}\PY{p}{,} \PY{n}{alpha}\PY{o}{=}\PY{o}{.}\PY{l+m+mi}{6}\PY{p}{,} \PY{n}{edgecolor}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{black}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{rwidth}\PY{o}{=}\PY{l+m+mf}{0.9}\PY{p}{)} \PY{c+c1}{\PYZsh{} alpha for transparency}
+         
+         
+         \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Total number of properties: }\PY{l+s+s2}{\PYZdq{}} \PY{o}{+} \PY{n+nb}{str}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{x}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+         
+         
+         \PY{n}{counts}\PY{p}{,} \PY{n}{bin\PYZus{}edges} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{histogram}\PY{p}{(}\PY{n}{x}\PY{p}{,} \PY{n}{bins}\PY{o}{=}\PY{n}{bin\PYZus{}values}\PY{p}{)}
+         
+         
+         \PY{n+nb}{print}\PY{p}{(}\PY{n}{counts}\PY{p}{)}
+         
+         
+         \PY{c+c1}{\PYZsh{} Label the raw counts and the percentages below the x\PYZhy{}axis...}
+         \PY{n}{bin\PYZus{}centers} \PY{o}{=} \PY{l+m+mf}{0.5} \PY{o}{*} \PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{bin\PYZus{}values}\PY{p}{)} \PY{o}{+} \PY{n}{bin\PYZus{}values}\PY{p}{[}\PY{p}{:}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} For each bar: Place a label}
+         \PY{k}{for} \PY{n}{rect} \PY{o+ow}{in} \PY{n}{rects}\PY{p}{:}
+             \PY{c+c1}{\PYZsh{} Get X and Y placement of label from rect.}
+             \PY{n}{y\PYZus{}value} \PY{o}{=} \PY{n}{rect}\PY{o}{.}\PY{n}{get\PYZus{}height}\PY{p}{(}\PY{p}{)}
+             \PY{n}{x\PYZus{}value} \PY{o}{=} \PY{n}{rect}\PY{o}{.}\PY{n}{get\PYZus{}x}\PY{p}{(}\PY{p}{)} \PY{o}{+} \PY{n}{rect}\PY{o}{.}\PY{n}{get\PYZus{}width}\PY{p}{(}\PY{p}{)} \PY{o}{/} \PY{l+m+mi}{2}
+         
+             \PY{c+c1}{\PYZsh{} Number of points between bar and label. Change to your liking.}
+             \PY{n}{space} \PY{o}{=} \PY{l+m+mi}{5}
+             \PY{c+c1}{\PYZsh{} Vertical alignment for positive values}
+             \PY{n}{va} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bottom}\PY{l+s+s1}{\PYZsq{}}
+         
+             \PY{c+c1}{\PYZsh{} If value of bar is negative: Place label below bar}
+             \PY{k}{if} \PY{n}{y\PYZus{}value} \PY{o}{\PYZlt{}} \PY{l+m+mi}{0}\PY{p}{:}
+                 \PY{c+c1}{\PYZsh{} Invert space to place label below}
+                 \PY{n}{space} \PY{o}{*}\PY{o}{=} \PY{o}{\PYZhy{}}\PY{l+m+mi}{1}
+                 \PY{c+c1}{\PYZsh{} Vertically align label at top}
+                 \PY{n}{va} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{top}\PY{l+s+s1}{\PYZsq{}}
+         
+             \PY{c+c1}{\PYZsh{} Use Y value as label and format number with one decimal place}
+             \PY{n}{label} \PY{o}{=} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+si}{\PYZob{}:d\PYZcb{}}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n+nb}{int}\PY{p}{(}\PY{n}{y\PYZus{}value}\PY{p}{)}\PY{p}{)}
+         
+             \PY{c+c1}{\PYZsh{} Create annotation}
+             \PY{k}{if}\PY{p}{(} \PY{n}{y\PYZus{}value} \PY{o}{\PYZgt{}} \PY{l+m+mi}{0} \PY{p}{)}\PY{p}{:}
+                 \PY{n}{plt}\PY{o}{.}\PY{n}{annotate}\PY{p}{(}
+                     \PY{n}{label}\PY{p}{,}                      \PY{c+c1}{\PYZsh{} Use `label` as label}
+                     \PY{p}{(}\PY{n}{x\PYZus{}value}\PY{p}{,} \PY{n}{y\PYZus{}value}\PY{p}{)}\PY{p}{,}         \PY{c+c1}{\PYZsh{} Place label at end of the bar}
+                     \PY{n}{xytext}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{space}\PY{p}{)}\PY{p}{,}          \PY{c+c1}{\PYZsh{} Vertically shift label by `space`}
+                     \PY{n}{textcoords}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{offset points}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{c+c1}{\PYZsh{} Interpret `xytext` as offset in points}
+                     \PY{n}{ha}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{center}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}                \PY{c+c1}{\PYZsh{} Horizontally center label}
+                     \PY{c+c1}{\PYZsh{}color=\PYZsq{}black\PYZsq{},}
+                     \PY{c+c1}{\PYZsh{}size=14,}
+                     \PY{n}{va}\PY{o}{=}\PY{n}{va}\PY{p}{)}                      \PY{c+c1}{\PYZsh{} Vertically align label differently for}
+                                                 \PY{c+c1}{\PYZsh{} positive and negative values.}
+         \PY{c+c1}{\PYZsh{} Plot a histogram of the init\PYZus{}price}
+         \PY{c+c1}{\PYZsh{}x.plot(kind=\PYZsq{}bar\PYZsq{}, alpha=.6) \PYZsh{} alpha for transparency}
+         
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{show}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+Total number of properties: 70
+[ 1 12 11  9  7  5  7  4  5  1  3  4  1  0  0]
+
+    \end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_36_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}27}]:} \PY{n}{t1} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{mth}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+m+mi}{2}\PY{p}{]}
+         
+         \PY{n}{t2} \PY{o}{=} \PY{n}{t1}\PY{p}{[}\PY{n}{t1}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{isin}\PY{p}{(}\PY{p}{[}\PY{l+m+mi}{165}\PY{p}{]}\PY{p}{)}\PY{p}{]}
+         
+         \PY{n}{t3} \PY{o}{=} \PY{n}{t2}\PY{p}{[}\PY{n}{t2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZgt{}} \PY{l+m+mi}{8}\PY{p}{]}
+         
+         \PY{n}{t4} \PY{o}{=} \PY{n}{t3}\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{lat}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{lng}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bathrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bedrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{mth}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+         
+         \PY{n}{t4}\PY{o}{.}\PY{n}{sort\PYZus{}values}\PY{p}{(}\PY{n}{by}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}27}]:}                  lat      lng  bathrooms  bedrooms  guests  init\_price  \textbackslash{}
+         property\_id                                                              
+         9148674     -33.2841  149.108          1         4      10         175   
+         
+                      book\_days  mth  revenue  
+         property\_id                           
+         9148674            2.0  2.0    350.0  
+\end{Verbatim}
+            
+    The best properties across Feb to June with highest consistent revenues
+are:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \emph{9062114} - BELL HILL, ORANGE, NSW (\$610)
+\item
+  \emph{9137336} - YOURSTAY GROUP THE EDWARD TOWNHOUSES (\$350)
+\item
+  \emph{9148674} - YOURSTAY GROUP THE DORA HALL (\$175)
+\item
+  \emph{9168471} - MAGNIFICENT "WILLOWOOD," ORANGE (\$1087)
+\item
+  \emph{9169308} - HAMER HOUSE IN CENTRAL ORANGE - ENTIRE HOUSE (\$390)
+\item
+  \emph{9199601} - LARGE \& LUXURIOUS HERITAGE HOUSE - CENTRAL ORANGE
+  (\$807)
+\end{enumerate}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}28}]:} \PY{c+c1}{\PYZsh{} Plot the bookings vs the initial price}
+         
+         \PY{c+c1}{\PYZsh{}plot\PYZus{}ds = full\PYZus{}dataset[full\PYZus{}dataset[\PYZsq{}total\PYZus{}booked\PYZus{}days\PYZsq{}] \PYZgt{} 0]}
+         
+         \PY{c+c1}{\PYZsh{} Plot the Orange suburb}
+         \PY{n}{plot\PYZus{}ds\PYZus{}2} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{isin}\PY{p}{(}\PY{p}{[}\PY{l+m+mi}{683}\PY{p}{,}\PY{l+m+mi}{41}\PY{p}{]}\PY{p}{)}\PY{p}{]}
+         
+         \PY{n}{plot\PYZus{}ds\PYZus{}3} \PY{o}{=} \PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{p}{[}\PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{mth}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+m+mi}{4}\PY{p}{]}
+         
+         \PY{n}{plot\PYZus{}ds\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{plot\PYZus{}ds\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{*} \PY{n}{plot\PYZus{}ds\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         
+         \PY{c+c1}{\PYZsh{}plot\PYZus{}ds\PYZus{}3.info()}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{20}\PY{p}{,}\PY{l+m+mi}{12}\PY{p}{)}\PY{p}{)}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{title}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{30 day Revenue vs Number of Guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Number of Guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Estimated Revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{plot\PYZus{}ds\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}\PY{n}{plot\PYZus{}ds\PYZus{}3}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{show}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+/Users/taj/anaconda3/lib/python3.6/site-packages/ipykernel\_launcher.py:10: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row\_indexer,col\_indexer] = value instead
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html\#indexing-view-versus-copy
+  \# Remove the CWD from sys.path while we load stuff.
+
+    \end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_39_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}29}]:} \PY{c+c1}{\PYZsh{} Get the top 10 by revenue}
+         \PY{n}{rev10} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{isin}\PY{p}{(}\PY{p}{[}\PY{l+m+mi}{165}\PY{p}{]}\PY{p}{)}\PY{p}{]}
+         
+         \PY{n}{rev10a} \PY{o}{=} \PY{n}{rev10}\PY{o}{.}\PY{n}{sort\PYZus{}values}\PY{p}{(}\PY{n}{by}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}\PY{n}{ascending}\PY{o}{=}\PY{k+kc}{False}\PY{p}{)}
+         
+         \PY{n}{rev10a}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{l+m+mi}{5}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}29}]:}              bathrooms  bedrooms  beds  \textbackslash{}
+         property\_id                              
+         9168471              4         6    10   
+         9169308              2         4     7   
+         9137336              2         6     8   
+         9168471              4         6    10   
+         9062114              2         4     8   
+         
+                                                       description\_full  \textbackslash{}
+         property\_id                                                      
+         9168471      [This outstanding home boasts 4 double bedroom{\ldots}   
+         9169308      [Hamer House serviced accommodation is your 'h{\ldots}   
+         9137336      [ACCOMMODATION OF CHOICE, AND AS SEEN IN THE P{\ldots}   
+         9168471      [This outstanding home boasts 4 double bedroom{\ldots}   
+         9062114      ["BELL HILL" is a private retreat, nestled on {\ldots}   
+         
+                      description\_wc  guests  \textbackslash{}
+         property\_id                           
+         9168471                 318      12   
+         9169308                 179      10   
+         9137336                 238      14   
+         9168471                 318      12   
+         9062114                 211      11   
+         
+                                                           heading  init\_price  \textbackslash{}
+         property\_id                                                             
+         9168471                   Magnificent "Willowood," Orange        1033   
+         9169308      Hamer House in Central Orange - Entire House         390   
+         9137336              Yourstay Group The Edward Townhouses         350   
+         9168471                   Magnificent "Willowood," Orange        1033   
+         9062114                            BELL HILL, Orange, NSW         610   
+         
+                            lat        lng   {\ldots}    f\_indoor\_pool f\_sauna  \textbackslash{}
+         property\_id                         {\ldots}                            
+         9168471     -33.300297  149.14983   {\ldots}              0.0     0.0   
+         9169308     -33.283104  149.08710   {\ldots}              0.0     0.0   
+         9137336     -33.287900  149.10576   {\ldots}              0.0     0.0   
+         9168471     -33.300297  149.14983   {\ldots}              0.0     0.0   
+         9062114     -33.189600  149.05100   {\ldots}              0.0     0.0   
+         
+                     f\_pantry\_items  f\_cot  f\_eco\_friendly f\_free\_wifi  prop\_type\_id  \textbackslash{}
+         property\_id                                                                   
+         9168471                0.0    0.0             0.0         0.0             1   
+         9169308                0.0    0.0             0.0         0.0             1   
+         9137336                0.0    0.0             0.0         0.0             1   
+         9168471                0.0    0.0             0.0         0.0             1   
+         9062114                0.0    0.0             0.0         0.0             1   
+         
+                     page\_nbr  page\_pos  revenue  
+         property\_id                              
+         9168471          1.0       8.0  12396.0  
+         9169308          NaN       NaN   4290.0  
+         9137336          1.0      18.0   4200.0  
+         9168471          1.0       8.0   4132.0  
+         9062114          1.0      49.0   3660.0  
+         
+         [5 rows x 88 columns]
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}49}]:} \PY{c+c1}{\PYZsh{} Now check individual graphs in detail}
+         \PY{n}{ax} \PY{o}{=} \PY{n}{sns}\PY{o}{.}\PY{n}{lmplot}\PY{p}{(} \PY{n}{x}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{guests}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{y}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{revenue}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{data}\PY{o}{=}\PY{n}{rev10a}\PY{p}{,} \PY{n}{fit\PYZus{}reg}\PY{o}{=}\PY{k+kc}{False}
+                    \PY{p}{,} \PY{n}{hue}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{suburb\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}
+                    \PY{p}{,} \PY{n}{aspect}\PY{o}{=}\PY{l+m+mf}{1.61}
+                   \PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{l+m+mi}{8}\PY{p}{)}
+         
+         \PY{n}{ax} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{gca}\PY{p}{(}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{set\PYZus{}title}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Number of Guests vs Revenue}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Number of Guests}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+         \PY{n}{ax}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Revenue (\PYZdl{})}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}49}]:} Text(23.4211,0.5,'Revenue (\$)')
+\end{Verbatim}
+            
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_41_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}31}]:} \PY{n}{a1} \PY{o}{=} \PY{n}{full\PYZus{}dataset}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{l+m+mi}{9202601}\PY{p}{]}
+         
+         \PY{n}{a1}
+         
+         
+         \PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}31}]:}              bathrooms  bedrooms  beds  \textbackslash{}
+         property\_id                              
+         27675                1         3     3   
+         27675                1         3     3   
+         168649               1         3     4   
+         211800               1         4     4   
+         211800               1         4     4   
+         
+                                                       description\_full  \textbackslash{}
+         property\_id                                                      
+         27675        [Colonial Court Villas are walking distance fr{\ldots}   
+         27675        [Colonial Court Villas are walking distance fr{\ldots}   
+         168649       [Charming cottage in a quiet Mudgee street, ju{\ldots}   
+         211800       [Located a few minutes to Mudgee CBD, Enjoy th{\ldots}   
+         211800       [Located a few minutes to Mudgee CBD, Enjoy th{\ldots}   
+         
+                      description\_wc  guests                                heading  \textbackslash{}
+         property\_id                                                                  
+         27675                   113       8                  Colonial Court Villas   
+         27675                   113       8                  Colonial Court Villas   
+         168649                  113       6   21 on Lawson in the centre of Mudgee   
+         211800                   74       7  Mudgee Escape - relax unwind discover   
+         211800                   74       7  Mudgee Escape - relax unwind discover   
+         
+                      init\_price        lat        lng   {\ldots}    f\_indoor\_pool f\_sauna  \textbackslash{}
+         property\_id                                     {\ldots}                            
+         27675               189 -32.589400  149.57700   {\ldots}              0.0     0.0   
+         27675               189 -32.589400  149.57700   {\ldots}              0.0     0.0   
+         168649              262 -32.593037  149.59360   {\ldots}              0.0     0.0   
+         211800              306 -32.583110  149.56712   {\ldots}              0.0     0.0   
+         211800              306 -32.583110  149.56712   {\ldots}              0.0     0.0   
+         
+                     f\_pantry\_items  f\_cot  f\_eco\_friendly f\_free\_wifi  prop\_type\_id  \textbackslash{}
+         property\_id                                                                   
+         27675                  0.0    0.0             0.0         0.0             2   
+         27675                  0.0    0.0             0.0         0.0             2   
+         168649                 0.0    0.0             0.0         0.0             1   
+         211800                 0.0    0.0             0.0         0.0             1   
+         211800                 0.0    0.0             0.0         0.0             1   
+         
+                     page\_nbr  page\_pos  revenue  
+         property\_id                              
+         27675            3.0      24.0   1134.0  
+         27675            3.0      24.0    567.0  
+         168649           1.0      19.0    524.0  
+         211800           3.0      25.0    612.0  
+         211800           3.0      25.0   1224.0  
+         
+         [5 rows x 88 columns]
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}33}]:} \PY{c+c1}{\PYZsh{} Show the top 10 highest revenue earners}
+         
+         \PY{n}{plot\PYZus{}ds\PYZus{}3} \PY{o}{=} \PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{o}{.}\PY{n}{sort\PYZus{}values}\PY{p}{(}\PY{n}{by}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{ascending}\PY{o}{=}\PY{k+kc}{False}\PY{p}{)}
+         
+         \PY{n}{plot\PYZus{}ds\PYZus{}3}\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{bedrooms}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{beds}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{guests}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{photos}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{book\PYZus{}days}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{revenue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{head}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}33}]:}              bedrooms  beds  guests  init\_price  photos  book\_days  revenue
+         property\_id                                                                
+         9214387             5     5      10         647     0.0       12.0   7764.0
+         9166132             5     6      10         856    24.0        9.0   7704.0
+         9166132             5     6      10         856    24.0        8.0   6848.0
+         9210788             4     4      10        1000     0.0        6.0   6000.0
+         9191213             5     6      10         600     0.0       10.0   6000.0
+\end{Verbatim}
+            
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}34}]:} \PY{c+c1}{\PYZsh{} Now draw a graph of Initial Price vs Distance from Sydney}
+         \PY{k+kn}{import} \PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot} \PY{k}{as} \PY{n+nn}{plt}
+         \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{20}\PY{p}{,}\PY{l+m+mi}{12}\PY{p}{)}\PY{p}{)}
+         
+         
+         \PY{c+c1}{\PYZsh{}nsw\PYZus{}data\PYZus{}s6 = nsw\PYZus{}data\PYZus{}s5[nsw\PYZus{}data\PYZus{}s5[\PYZsq{}syd\PYZus{}dist\PYZus{}km\PYZsq{}] \PYZlt{}= 250]}
+         
+         \PY{c+c1}{\PYZsh{}nsw\PYZus{}data\PYZus{}s7 = nsw\PYZus{}data\PYZus{}s6[nsw\PYZus{}data\PYZus{}s6[\PYZsq{}init\PYZus{}price\PYZsq{}] \PYZlt{}= 600]}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{title}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Distance from Sydney vs Price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Initial Price per night (\PYZdl{}AUD)}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Distance from Sydney (km)}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{plt}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{init\PYZus{}price}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}\PY{n}{full\PYZus{}dataset}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{syd\PYZus{}dist\PYZus{}km}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+         
+         \PY{n}{plt}\PY{o}{.}\PY{n}{show}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_44_0.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}48}]:} \PY{c+c1}{\PYZsh{} Now check individual graphs in detail}
+         \PY{n}{sns}\PY{o}{.}\PY{n}{lmplot}\PY{p}{(} \PY{n}{x}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{guests}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{y}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{revenue}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{data}\PY{o}{=}\PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{p}{,} \PY{n}{fit\PYZus{}reg}\PY{o}{=}\PY{k+kc}{False}
+                    \PY{p}{,} \PY{n}{hue}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{prop\PYZus{}type\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}
+                    \PY{p}{,} \PY{n}{aspect}\PY{o}{=}\PY{l+m+mf}{1.61}
+                   \PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{l+m+mi}{8}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}48}]:} <seaborn.axisgrid.FacetGrid at 0x1a1cf3df98>
+\end{Verbatim}
+            
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_45_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}42}]:} \PY{c+c1}{\PYZsh{} Now check individual graphs in detail}
+         
+         \PY{c+c1}{\PYZsh{} Try just one property\PYZus{}type \PYZhy{} House}
+         
+         \PY{n}{nsw\PYZus{}data\PYZus{}s8} \PY{o}{=} \PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{p}{[}\PY{n}{plot\PYZus{}ds\PYZus{}2}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{prop\PYZus{}type\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{l+m+mi}{1}\PY{p}{]}
+         
+         \PY{n}{sns}\PY{o}{.}\PY{n}{lmplot}\PY{p}{(} \PY{n}{x}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{syd\PYZus{}dist\PYZus{}km}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{y}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{book\PYZus{}days}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{data}\PY{o}{=}\PY{n}{nsw\PYZus{}data\PYZus{}s8}\PY{p}{,} \PY{n}{fit\PYZus{}reg}\PY{o}{=}\PY{k+kc}{False}
+                    \PY{p}{,} \PY{n}{hue}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{prop\PYZus{}type\PYZus{}id}\PY{l+s+s1}{\PYZsq{}}
+                    \PY{p}{,} \PY{n}{aspect}\PY{o}{=}\PY{l+m+mf}{1.61}
+                   \PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{l+m+mi}{8}\PY{p}{)}
+\end{Verbatim}
+
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}42}]:} <seaborn.axisgrid.FacetGrid at 0x1a1c706ef0>
+\end{Verbatim}
+            
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_46_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor} }]:} \PY{c+c1}{\PYZsh{}test\PYZus{}cor = full\PYZus{}dataset.corr(method=\PYZsq{}pearson\PYZsq{})}
+        
+        \PY{c+c1}{\PYZsh{}test\PYZus{}cor}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}46}]:} \PY{k}{def} \PY{n+nf}{plot\PYZus{}corr}\PY{p}{(}\PY{n}{df}\PY{p}{,}\PY{n}{size}\PY{o}{=}\PY{l+m+mi}{10}\PY{p}{)}\PY{p}{:}
+             \PY{l+s+sd}{\PYZsq{}\PYZsq{}\PYZsq{}Function plots a graphical correlation matrix for each pair of columns in the dataframe.}
+         
+         \PY{l+s+sd}{    Input:}
+         \PY{l+s+sd}{        df: pandas DataFrame}
+         \PY{l+s+sd}{        size: vertical and horizontal size of the plot\PYZsq{}\PYZsq{}\PYZsq{}}
+         
+             \PY{n}{corr} \PY{o}{=} \PY{n}{df}\PY{o}{.}\PY{n}{corr}\PY{p}{(}\PY{p}{)}
+             \PY{n}{fig}\PY{p}{,} \PY{n}{ax} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{subplots}\PY{p}{(}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{n}{size}\PY{p}{,} \PY{n}{size}\PY{p}{)}\PY{p}{)}
+             \PY{n}{ax}\PY{o}{.}\PY{n}{matshow}\PY{p}{(}\PY{n}{corr}\PY{p}{)}
+             \PY{n}{plt}\PY{o}{.}\PY{n}{xticks}\PY{p}{(}\PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{corr}\PY{o}{.}\PY{n}{columns}\PY{p}{)}\PY{p}{)}\PY{p}{,} \PY{n}{corr}\PY{o}{.}\PY{n}{columns}\PY{p}{)}\PY{p}{;}
+             \PY{n}{plt}\PY{o}{.}\PY{n}{yticks}\PY{p}{(}\PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{corr}\PY{o}{.}\PY{n}{columns}\PY{p}{)}\PY{p}{)}\PY{p}{,} \PY{n}{corr}\PY{o}{.}\PY{n}{columns}\PY{p}{)}\PY{p}{;}
+             
+         \PY{c+c1}{\PYZsh{}plot\PYZus{}corr(full\PYZus{}dataset)}
 \end{Verbatim}
 
 

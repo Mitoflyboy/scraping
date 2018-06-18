@@ -39,8 +39,12 @@ log = logging.getLogger("ex")
 
 
 
-
+# Open the full list of files
 fp = open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar/stayz_calendar_' + date_str + '.json', 'a')
+
+
+# Open only a custom list of files
+#fp = open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_calendar/stayz_calendar_custom.json', 'a')
 
 
 
@@ -53,6 +57,9 @@ property_number = 1
 
 # Read the list of URLs from the previously saved input list
 with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_' + date_str + '.json') as json_data:
+
+#with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extract_custom.json') as json_data:
+
 	property_urls = json.load(json_data)
 
 	for p in property_urls:
@@ -85,7 +92,7 @@ with open('/Users/taj/GitHub/scraping/stayz/WebData/nsw_extract/stayz_nsw_extrac
 
 				
 				# Get the calenders for all 6 months
-				cal = p_browser.find_elements_by_xpath('//div[@id="calendar"]/div/div/table')
+				cal = p_browser.find_elements_by_xpath('//div[@id="calendar"]/div')
 
 
 				try:
