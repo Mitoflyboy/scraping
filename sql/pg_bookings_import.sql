@@ -73,10 +73,10 @@ From
 	stayzdb.stayz_bookings_load
 Where
 	property_id = 9168471
-	and EXTRACT(MONTH FROM ext_at) = '05'
+	and EXTRACT(MONTH FROM ext_at) = '04'
 ;
 
--- Gives the date as 2018-05-28
+-- Gives the date as 2018-06-23
 -- Now get all bookings with that extract date:
 Select
 	*
@@ -84,7 +84,8 @@ From
 	stayzdb.stayz_bookings_load
 Where
 	property_id = 9168471
-	and ext_at = '2018-05-28'
+	and ext_at = '2018-04-29'
+	and EXTRACT(MONTH FROM arr_dt) = EXTRACT(MONTH FROM CAST('2018-04-29' as DATE))
 Order by arr_dt asc
 ;
 
