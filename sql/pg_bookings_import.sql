@@ -62,7 +62,7 @@ order by arr_dt asc
 
 -- Check a property
 select * from stayzdb.stayz_bookings_concat
-where property_id = 9062114
+where property_id = 9168471
 order by arr_dt asc, ext_at desc
 ;
 
@@ -73,7 +73,7 @@ From
 	stayzdb.stayz_bookings_load
 Where
 	property_id = 9168471
-	and EXTRACT(MONTH FROM ext_at) = '04'
+	and EXTRACT(MONTH FROM ext_at) = '03'
 ;
 
 -- Gives the date as 2018-06-23
@@ -84,8 +84,8 @@ From
 	stayzdb.stayz_bookings_load
 Where
 	property_id = 9168471
-	and ext_at = '2018-04-29'
-	and EXTRACT(MONTH FROM arr_dt) = EXTRACT(MONTH FROM CAST('2018-04-29' as DATE))
+	and ext_at = '2018-03-31'
+	and EXTRACT(MONTH FROM arr_dt) = EXTRACT(MONTH FROM CAST('2018-03-31' as DATE))
 Order by arr_dt asc
 ;
 
@@ -122,8 +122,9 @@ limit 10
 
 Select
 	A.property_id
-	--,sum(A.book_days)
-	,A.*
+	,EXTRACT(MONTH from A.arr_dt) as Mth
+	,sum(A.book_days)
+	--,A.*
 From
 	stayzdb.stayz_bookings_load A
 	Inner Join stayzdb.stayz_extract_dates B
@@ -132,7 +133,7 @@ From
 	And EXTRACT(MONTH from A.arr_dt) = B.mth
 Where
 	A.property_id = 9168471
-
+Group By 1,2
 
 
 create or replace function last_day(date) returns date as 
@@ -202,47 +203,32 @@ Where
 
 
 -- Now sum up the dates by month code:
+
+
+Truncate stayzdb.stayz_bookings_month_sum
+;
+
+Insert into stayzdb.stayz_bookings_month_sum
 Select
 	property_id
 	,month_code
-	,sum(book_days_split)
+	,sum(book_days_split) as days_booked
 From
 	stayzdb.stayz_bookins_month_split
-Where
-	property_id in(9148674, 9169308, 9062114, 9137336, 9168471)
 Group By 1,2
+;
+
+-- Select the results ordered by month
+Select * from stayzdb.stayz_bookings_month_sum
+--Where
+--	property_id in(9148674, 9168471, 9169308, 9062114, 9137336, 9168471)
 Order by 1,2 asc
 ;
 
--- If the arrival and departure dates are split over the end of month, then need to appropriately split the day count too!!
-
--- Identify duplicates and take the latest values
-Select
-	A.*
-	,B.ext_at
-	,B.arr_dt
-	,B.dep_dt
-	,B.book_days
-	,RANK() OVER (PARTITION BY A.property_id ORDER BY A.arr_dt desc, A.dep_dt desc)
-From
-	stayzdb.stayz_bookings_concat A
-	, stayzdb.stayz_bookings_concat B
-Where
-	A.property_id = B.property_id
-	And (A.arr_dt, A.dep_dt) OVERLAPS (B.arr_dt,B.dep_dt)
-	And ((A.arr_dt <> B.arr_dt) OR (A.dep_dt <> B.dep_dt))
-	And A.property_id = 9136503
-
--- If dates overlap then take this as a modification, and get the latest values based on ext_at date
-
-
-
--- Check the final result
-select property_id, count(*),sum(book_days)
-from stayzdb.stayz_bookings
-where property_id = 9136503
-group by 1
-order by 2 desc
-
 -- Cleanup table if required
 -- truncate stayzdb.stayz_bookings;
+
+COPY stayzdb.stayz_bookings_month_sum TO '/Users/taj/GitHub/scraping/stayz_analysis/monthly_bookings.csv' DELIMITER ',' CSV HEADER;
+
+
+
