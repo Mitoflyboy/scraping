@@ -220,9 +220,22 @@ Group By 1,2
 
 -- Select the results ordered by month
 Select * from stayzdb.stayz_bookings_month_sum
---Where
---	property_id in(9148674, 9168471, 9169308, 9062114, 9137336, 9168471)
+Where
+	property_id  = '9202004' --in(9148674, 9168471, 9169308, 9062114, 9137336, 9168471)
 Order by 1,2 asc
+;
+
+
+-- Create the oversize bookings > 14 days in length to ensure they are not part of the calculation
+Delete from stayzdb.stayz_bookings_load
+Where
+	--property_id = '9202004'
+	book_days > 14
+;
+
+
+-- Check the oversize bookings before they are deleted
+Select * from stayzdb.stayz_bookings_oversize
 ;
 
 -- Cleanup table if required
